@@ -9,6 +9,8 @@ describe('loadConfig', () => {
       rateLimitPerMinute: 20,
       modelCacheDir: 'server/.cache/models',
       onFly: false,
+      anthropicModel: 'claude-haiku-4-5-20251001',
+      dailyRequestCap: 300,
     });
   });
 
@@ -20,6 +22,8 @@ describe('loadConfig', () => {
       RATE_LIMIT_PER_MINUTE: '5',
       MODEL_CACHE_DIR: '/models',
       FLY_APP_NAME: 'peter-parks-rag',
+      ANTHROPIC_MODEL: 'claude-other',
+      AI_DAILY_REQUEST_CAP: '7',
     });
     expect(config).toEqual({
       port: 9000,
@@ -28,6 +32,17 @@ describe('loadConfig', () => {
       rateLimitPerMinute: 5,
       modelCacheDir: '/models',
       onFly: true,
+      anthropicModel: 'claude-other',
+      dailyRequestCap: 7,
     });
+  });
+
+  it.each([
+    ['0', 0],
+    ['abc', 300],
+    ['-3', 300],
+    ['  ', 300],
+  ])('AI_DAILY_REQUEST_CAP=%p gives a cap of %p', (value, expected) => {
+    expect(loadConfig({ AI_DAILY_REQUEST_CAP: value }).dailyRequestCap).toBe(expected);
   });
 });

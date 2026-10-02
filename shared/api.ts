@@ -49,3 +49,25 @@ export const SearchResponseSchema = z.object({
   latencyMs: z.number(),
 });
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;
+
+export const AskRequestSchema = z.object({ query: z.string().trim().min(1).max(200) });
+export type AskRequest = z.infer<typeof AskRequestSchema>;
+
+/** parkId is derived by the server from chunkId; quote is verified against that chunk's text. */
+export const CitationSchema = z.object({
+  parkId: z.string(),
+  chunkId: z.string(),
+  quote: z.string(),
+});
+export type Citation = z.infer<typeof CitationSchema>;
+
+/** One JSON body (no streaming). abstained: true means citations is [] and answer is the fixed sentence. */
+export const AskResponseSchema = z.object({
+  answer: z.string(),
+  citations: z.array(CitationSchema),
+  abstained: z.boolean(),
+  mode: RetrievalModeSchema,
+  latencyMs: z.number(),
+  usage: z.object({ inputTokens: z.number(), outputTokens: z.number() }).optional(),
+});
+export type AskResponse = z.infer<typeof AskResponseSchema>;

@@ -3,8 +3,11 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyRequest } from 'fastify';
 import type { CapabilitiesResponse } from '../../shared/api';
 import type { Config } from './config';
+import { createDailyCap } from './dailyCap';
 import { sendError } from './errors';
+import type { LlmClient } from './llm/types';
 import type { Retriever } from './rag/retrieve';
+import { registerAskRoute } from './routes/ask';
 import { registerSearchRoute } from './routes/search';
 
 export interface AppDeps {
@@ -13,6 +16,10 @@ export interface AppDeps {
   retriever?: Retriever;
   /** Where JSON log lines go. Omitted = no logging (tests). */
   logStream?: { write(line: string): void };
+  /** The model client. Omitted = /v1/ask answers 503. Tests pass a fake. */
+  llm?: LlmClient;
+  /** Clock for the daily cap (tests move it past UTC midnight). */
+  now?: () => Date;
 }
 
 // On Fly the proxy sets Fly-Client-IP to the caller's address. Anywhere else any
@@ -22,7 +29,7 @@ function clientKey(request: FastifyRequest, onFly: boolean): string {
   return onFly && typeof flyIp === 'string' && flyIp !== '' ? flyIp : request.ip;
 }
 
-export function buildApp({ config, retriever, logStream }: AppDeps) {
+export function buildApp({ config, retriever, logStream, llm, now }: AppDeps) {
   const app = Fastify({
     bodyLimit: 2048,
     logger: logStream
@@ -37,6 +44,7 @@ export function buildApp({ config, retriever, logStream }: AppDeps) {
       : false,
   });
   const aiEnabled = config.anthropicKey !== '';
+  const dailyCap = createDailyCap(config.dailyRequestCap, now);
 
   void app.register(cors, { origin: config.corsOrigin });
   void app.register(rateLimit, {
@@ -77,10 +85,7 @@ export function buildApp({ config, retriever, logStream }: AppDeps) {
 
     registerSearchRoute(scope, aiEnabled, retriever);
 
-    // Grounded answers arrive in T6; until then this is always unavailable.
-    scope.post('/v1/ask', async (_request, reply) =>
-      sendError(reply, 503, 'ai_unavailable', 'AI answers are not available.'),
-    );
+    registerAskRoute(scope, { aiEnabled, retriever, llm, dailyCap, model: config.anthropicModel });
   });
 
   return app;

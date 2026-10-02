@@ -1,5 +1,6 @@
 import { buildApp } from './app';
 import { loadConfig } from './config';
+import { createAnthropicLlm } from './llm/anthropic';
 import { loadEmbedder } from './rag/embedder';
 import { loadChunks } from './rag/index';
 import { createRetriever } from './rag/retrieve';
@@ -13,7 +14,8 @@ try {
 
 const config = loadConfig();
 const retriever = createRetriever(loadChunks());
-const app = buildApp({ config, retriever, logStream: process.stdout });
+const llm = config.anthropicKey === '' ? undefined : createAnthropicLlm(config.anthropicKey);
+const app = buildApp({ config, retriever, llm, logStream: process.stdout });
 
 app
   .listen({ port: config.port, host: '0.0.0.0' })
