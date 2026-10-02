@@ -8,7 +8,7 @@ const PIXEL = Buffer.from(
 
 export const test = base.extend({
   page: async ({ page }, use) => {
-    await page.route('**/*.tile.openstreetmap.org/**', (route) =>
+    await page.route('**/tile.openstreetmap.org/**', (route) =>
       route.fulfill({ contentType: 'image/png', body: PIXEL }),
     );
     await use(page);

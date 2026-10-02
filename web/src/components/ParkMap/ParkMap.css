@@ -1,0 +1,23 @@
+@import 'leaflet/dist/leaflet.css';
+
+.map-canvas {
+  height: 60vh;
+  min-height: 20rem;
+  width: 100%;
+}
+
+/* Keyboard focus must be clearly visible on the map and its markers. */
+.map-canvas:focus-visible,
+.leaflet-marker-icon:focus-visible {
+  outline: 3px solid #1a1a1a;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #ffffff;
+}
+
+/* Selected marker: dashed outline and glow, so it does not rely on color. */
+.park-marker--selected {
+  outline: 3px dashed #1a1a1a;
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 4px #ffffff);
+  transform-origin: bottom center;
+}
