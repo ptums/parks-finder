@@ -8,8 +8,22 @@ import { ParkList } from '../ParkList';
 import { SearchBar } from './SearchBar';
 
 const parks: Park[] = [
-  { id: 'a', name: 'Alpha Park', amenities: ['dog-run', 'restrooms'], images: [], rating: 3 },
-  { id: 'b', name: 'Beta Green', amenities: ['dog-run'], images: [], rating: 5 },
+  {
+    id: 'a',
+    name: 'Alpha Park',
+    amenities: ['dog-run', 'restrooms'],
+    images: [],
+    rating: 3,
+    coords: { lat: 41, lng: -73 },
+  },
+  {
+    id: 'b',
+    name: 'Beta Green',
+    amenities: ['dog-run'],
+    images: [],
+    rating: 5,
+    coords: { lat: 40, lng: -73 },
+  },
   { id: 'c', name: 'Gamma Field', amenities: ['wifi'], images: [] },
 ];
 
@@ -36,6 +50,19 @@ function settle(ms = 600) {
 // still in the DOM, so queryAllByRole needs hidden: true.
 function visibleNames() {
   return Array.from(document.querySelectorAll('.park-list-name')).map((el) => el.textContent);
+}
+
+function mockGeolocation(result: 'success' | 'denied' | 'unsupported') {
+  const getCurrentPosition = jest.fn((ok: PositionCallback, fail: PositionErrorCallback) => {
+    if (result === 'success')
+      ok({ coords: { latitude: 40, longitude: -73 } } as GeolocationPosition);
+    else fail({ code: 1, message: 'denied' } as GeolocationPositionError);
+  });
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: result === 'unsupported' ? undefined : { getCurrentPosition },
+  });
+  return getCurrentPosition;
 }
 
 describe('SearchBar', () => {
@@ -130,6 +157,68 @@ describe('SearchBar', () => {
     expect(input).toHaveValue('a');
   });
 
+  describe('use my location', () => {
+    afterEach(() => Reflect.deleteProperty(navigator, 'geolocation'));
+
+    it('does not ask for the location until the button is pressed', () => {
+      const getCurrentPosition = mockGeolocation('success');
+      setup();
+      expect(getCurrentPosition).not.toHaveBeenCalled();
+      expect(screen.queryByRole('option', { name: 'Distance' })).toBeNull();
+    });
+
+    it('sorts by distance, offers the Distance option and announces', async () => {
+      const getCurrentPosition = mockGeolocation('success');
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'Use my location' }));
+      expect(getCurrentPosition).toHaveBeenCalledWith(expect.any(Function), expect.any(Function), {
+        timeout: 10000,
+        maximumAge: 300000,
+      });
+      await screen.findByRole('button', { name: 'Stop using my location' });
+      expect(screen.getByLabelText('Sort by')).toHaveValue('distance');
+      expect(screen.getByRole('option', { name: 'Distance' })).toBeInTheDocument();
+      expect(visibleNames()).toEqual(['Beta Green', 'Alpha Park', 'Gamma Field']);
+      settle();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Sorted by distance from your location.',
+      );
+    });
+
+    it('stops using the location: back to name, announces, keeps focus', async () => {
+      mockGeolocation('success');
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'Use my location' }));
+      const stop = await screen.findByRole('button', { name: 'Stop using my location' });
+      expect(stop).toHaveFocus();
+      await user.click(stop);
+      expect(screen.getByLabelText('Sort by')).toHaveValue('name');
+      expect(screen.queryByRole('option', { name: 'Distance' })).toBeNull();
+      expect(visibleNames()).toEqual(['Alpha Park', 'Beta Green', 'Gamma Field']);
+      settle();
+      expect(screen.getByRole('status')).toHaveTextContent('Stopped using your location');
+      expect(screen.getByRole('button', { name: 'Use my location' })).toBeInTheDocument();
+    });
+
+    it.each(['denied', 'unsupported'] as const)(
+      'shows and announces a message when location is %s',
+      async (result) => {
+        mockGeolocation(result);
+        const { user } = setup();
+        await user.click(screen.getByRole('button', { name: 'Use my location' }));
+        expect(
+          await screen.findByText('Location unavailable. Parks are still listed by name.', {
+            selector: 'p',
+          }),
+        ).toBeVisible();
+        settle();
+        expect(screen.getByRole('status')).toHaveTextContent('Location unavailable');
+        expect(screen.getByLabelText('Sort by')).toHaveValue('name');
+        expect(visibleNames()).toHaveLength(3);
+      },
+    );
+  });
+
   describe('accessibility', () => {
     beforeEach(() => jest.useRealTimers());
 
@@ -165,5 +254,27 @@ describe('SearchBar', () => {
       await user.type(screen.getByLabelText('Search parks'), 'zzz');
       expect(await axe(container)).toHaveNoViolations();
     });
+
+    it.each(['success', 'denied'] as const)(
+      'has no axe violations after location %s',
+      async (r) => {
+        mockGeolocation(r);
+        const user = userEvent.setup();
+        const { container } = render(
+          <StateProvider>
+            <LiveRegionProvider>
+              <SearchBar parks={parks} />
+            </LiveRegionProvider>
+          </StateProvider>,
+        );
+        await user.click(screen.getByRole('button', { name: 'Use my location' }));
+        // Wait for the state after the location answer before checking it.
+        await screen.findByText(
+          r === 'success' ? 'Stop using my location' : /Location unavailable/,
+        );
+        expect(await axe(container)).toHaveNoViolations();
+        Reflect.deleteProperty(navigator, 'geolocation');
+      },
+    );
   });
 });

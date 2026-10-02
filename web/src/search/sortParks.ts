@@ -1,4 +1,5 @@
 import type { Park } from '../../../shared/parks';
+import { distanceKm } from '../geo/distance';
 import type { AppState } from '../state/types';
 
 function byName(a: Park, b: Park): number {
@@ -17,14 +18,20 @@ function byNumberDescending(value: (park: Park) => number | undefined) {
   };
 }
 
-// Distance sorting is not offered (the optional "Use my location" feature was cut),
-// so 'distance' falls back to name.
+/** Nearest first; parks without coordinates go last; ties by name. */
+function byDistance(origin: NonNullable<AppState['origin']>) {
+  return byNumberDescending((park) => (park.coords ? -distanceKm(origin, park.coords) : undefined));
+}
+
+// 'distance' with no origin falls back to name (the reducer normally prevents this).
 export function sortParks(parks: Park[], state: AppState): Park[] {
   const compare =
     state.sort === 'rating'
       ? byNumberDescending((park) => park.rating)
       : state.sort === 'acreage'
         ? byNumberDescending((park) => park.acreage)
-        : byName;
+        : state.sort === 'distance' && state.origin
+          ? byDistance(state.origin)
+          : byName;
   return [...parks].sort(compare);
 }

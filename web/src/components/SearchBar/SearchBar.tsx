@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { amenityLabel } from '../../../../shared/amenities';
 import type { Park } from '../../../../shared/parks';
 import { useAnnounce } from '../../a11y/useAnnounce';
+import { getPosition } from '../../geo/geolocation';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import { initialState } from '../../state/reducer';
@@ -13,6 +14,9 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: 'rating', label: 'Rating high-low' },
   { value: 'acreage', label: 'Size large-small' },
 ];
+
+const DISTANCE_OPTION = { value: 'distance' as SortKey, label: 'Distance' };
+const LOCATION_UNAVAILABLE = 'Location unavailable. Parks are still listed by name.';
 
 const NO_MATCH = 'No parks match. Try removing a filter.';
 
@@ -34,7 +38,8 @@ function amenityOptions(parks: Park[]): Array<{ slug: string; label: string }> {
 }
 
 export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
-  const { query, amenities, sort } = useAppState();
+  const { query, amenities, sort, origin } = useAppState();
+  const [locationError, setLocationError] = useState(false);
   const dispatch = useDispatch();
   const announce = useAnnounce();
   const visible = useVisibleParks(parks);
@@ -54,7 +59,30 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
     return () => clearTimeout(timer);
   }, [settings, count, announce]);
 
+  async function useMyLocation() {
+    const position = await getPosition();
+    if (!position) {
+      setLocationError(true);
+      announce(LOCATION_UNAVAILABLE);
+      return;
+    }
+    setLocationError(false);
+    // The location message replaces the count announcement the sort change would trigger.
+    announced.current = settingsKey({ query, amenities, sort: 'distance' });
+    dispatch({ type: 'setOrigin', origin: position });
+    dispatch({ type: 'setSort', sort: 'distance' });
+    announce('Sorted by distance from your location.');
+  }
+
+  function stopUsingLocation() {
+    const newSort = sort === 'distance' ? 'name' : sort;
+    announced.current = settingsKey({ query, amenities, sort: newSort });
+    dispatch({ type: 'setOrigin', origin: null });
+    announce('Stopped using your location. Parks are listed by name.');
+  }
+
   function reset() {
+    setLocationError(false);
     announced.current = settingsKey(initialState());
     dispatch({ type: 'reset' });
     announce(`Search and filters cleared. ${parks.length} parks shown.`);
@@ -99,13 +127,24 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
           value={sort}
           onChange={(e) => dispatch({ type: 'setSort', sort: e.target.value as SortKey })}
         >
-          {SORT_OPTIONS.map(({ value, label }) => (
+          {(origin ? [...SORT_OPTIONS, DISTANCE_OPTION] : SORT_OPTIONS).map(({ value, label }) => (
             <option key={value} value={value}>
               {label}
             </option>
           ))}
         </select>
       </label>
+
+      {origin ? (
+        <button type="button" className="search-button" onClick={stopUsingLocation}>
+          Stop using my location
+        </button>
+      ) : (
+        <button type="button" className="search-button" onClick={useMyLocation}>
+          Use my location
+        </button>
+      )}
+      {locationError && !origin && <p className="search-location-error">{LOCATION_UNAVAILABLE}</p>}
 
       <button type="button" className="search-reset" onClick={reset}>
         Reset
