@@ -109,7 +109,7 @@ Full table with evidence and honest status: `docs/VERIFICATION.md`. Summary, all
 - **Foundation (T1):** the orchestrator ran `npm ci` and `npm run check` independently: exit 0, 46 tests, 98.25% statement coverage.
 - **Map (T3):** `npm run check` exit 0, 61 tests; Playwright 12 passed.
 - **List and details (T2):** `npm run check` exit 0, 62 tests; Playwright 10 passed.
-- **All three merged on an integration branch:** `npm run check` exit 0, 77 tests; Playwright 18 passed.
+- **All three merged on an integration branch:** `npm run check` exit 0, 77 tests; Playwright 20 passed (after fixing a cross-ticket test locator; see REVIEW_LOG #19). The submission was also unzipped into a clean folder: `npm ci` + `npm run check` exit 0, and the server with no key returned `{"ai":false}`.
 - **Focus return from a map marker:** an ad-hoc throwaway Playwright test (not committed) showed Enter on a marker opens the dialog, focus lands on the heading, Esc returns focus to the marker, and Space also opens it (2 passed, desktop and phone). Because it is not committed, it is not a regression test.
 - **Hooks:** a deliberate type-error commit was rejected by the pre-commit hook (TS2322, "husky - pre-commit script failed (code 2)"). The pre-push hook ran Jest on each push. CI was green on the foundation PR.
 - **Not checked:** a real screen reader, a real phone, 200% zoom, tile failure in a real browser, geolocation, any AI behavior, any deployment, or the unzipped submission running in a clean directory (the zip dry run is the human's final step).
@@ -143,7 +143,7 @@ To test with a screen reader: Safari on macOS skips links and buttons on Tab unl
 - **Hooks:** pre-commit runs lint-staged then a full typecheck; pre-push runs Jest.
 - **CI** (GitHub Actions) mirrors them: format check, lint, typecheck, Jest with coverage, build, Playwright.
 - **Jest + React Testing Library + jest-axe**: 77 tests on the integration branch; coverage thresholds enforced (foundation measured 98.25% statements).
-- **Playwright** (desktop and phone): 18 passed on the integration branch.
+- **Playwright** (desktop and phone): 20 passed on the integration branch (T1+T2+T3).
 - CI never calls an AI API (none is called at all).
 
 ## Time spent
