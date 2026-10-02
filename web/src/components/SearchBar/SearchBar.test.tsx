@@ -65,6 +65,18 @@ function mockGeolocation(result: 'success' | 'denied' | 'unsupported') {
   return getCurrentPosition;
 }
 
+function mockDeferredGeolocation() {
+  let succeed: () => void = () => {};
+  const getCurrentPosition = jest.fn((ok: PositionCallback) => {
+    succeed = () => ok({ coords: { latitude: 40, longitude: -73 } } as GeolocationPosition);
+  });
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: { getCurrentPosition },
+  });
+  return { getCurrentPosition, succeed: () => succeed() };
+}
+
 describe('SearchBar', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
@@ -157,8 +169,58 @@ describe('SearchBar', () => {
     expect(input).toHaveValue('a');
   });
 
+  afterEach(() => Reflect.deleteProperty(navigator, 'geolocation'));
+
   describe('use my location', () => {
-    afterEach(() => Reflect.deleteProperty(navigator, 'geolocation'));
+    it('ignores a second press while waiting and announces once', async () => {
+      const { getCurrentPosition, succeed } = mockDeferredGeolocation();
+      const { user } = setup();
+      const button = screen.getByRole('button', { name: 'Use my location' });
+      await user.click(button);
+      await user.click(button);
+      expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+      expect(button).toHaveAttribute('aria-busy', 'true');
+      expect(screen.getByText('Finding your location…')).toBeInTheDocument();
+      act(() => succeed());
+      await screen.findByRole('button', { name: 'Stop using my location' });
+      expect(screen.queryByText('Finding your location…')).toBeNull();
+      settle();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Sorted by distance from your location.',
+      );
+    });
+
+    it('drops the result when Reset is pressed while waiting', async () => {
+      const { succeed } = mockDeferredGeolocation();
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'Use my location' }));
+      await user.click(screen.getByRole('button', { name: 'Reset' }));
+      act(() => succeed());
+      expect(screen.getByRole('button', { name: 'Use my location' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Sort by')).toHaveValue('name');
+      expect(screen.queryByText('Finding your location…')).toBeNull();
+    });
+
+    it('words messages by the sort in use (rating)', async () => {
+      mockGeolocation('success');
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'Use my location' }));
+      await screen.findByRole('button', { name: 'Stop using my location' });
+      await user.selectOptions(screen.getByLabelText('Sort by'), 'rating');
+      settle(); // let the count announcement for the sort change pass
+      await user.click(await screen.findByRole('button', { name: 'Stop using my location' }));
+      expect(screen.getByLabelText('Sort by')).toHaveValue('rating');
+      settle();
+      expect(screen.getByRole('status')).toHaveTextContent('Parks are listed by rating.');
+    });
+
+    it('does not offer a location message about name when sorting by rating', async () => {
+      mockGeolocation('denied');
+      const { user } = setup();
+      await user.selectOptions(screen.getByLabelText('Sort by'), 'rating');
+      await user.click(screen.getByRole('button', { name: 'Use my location' }));
+      expect(await screen.findByText(/still listed by rating/, { selector: 'p' })).toBeVisible();
+    });
 
     it('does not ask for the location until the button is pressed', () => {
       const getCurrentPosition = mockGeolocation('success');
@@ -273,7 +335,6 @@ describe('SearchBar', () => {
           r === 'success' ? 'Stop using my location' : /Location unavailable/,
         );
         expect(await axe(container)).toHaveNoViolations();
-        Reflect.deleteProperty(navigator, 'geolocation');
       },
     );
   });
