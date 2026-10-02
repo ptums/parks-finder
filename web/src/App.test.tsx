@@ -1,6 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { App } from './App';
+import { ANALYTICS_DISCLOSURE } from './analytics';
+import { env } from './env';
 
 describe('App shell', () => {
   it('has header, main and footer landmarks and one h1', () => {
@@ -26,6 +28,19 @@ describe('App shell', () => {
     render(<App />);
     expect(screen.getAllByRole('status')).toHaveLength(1);
     expect(screen.queryByText(/ai search/i)).toBeNull();
+  });
+
+  it('shows the analytics disclosure only when a key is set', () => {
+    const { unmount } = render(<App />);
+    expect(screen.queryByText(ANALYTICS_DISCLOSURE)).toBeNull();
+    unmount();
+    env.posthogKey = 'phc_test';
+    try {
+      render(<App />);
+      expect(screen.getByText(ANALYTICS_DISCLOSURE)).toBeInTheDocument();
+    } finally {
+      env.posthogKey = '';
+    }
   });
 
   it('has no axe violations', async () => {

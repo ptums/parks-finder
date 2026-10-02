@@ -46,7 +46,19 @@ it('with a key: init gets exactly the privacy options', async () => {
     disable_session_recording: true,
     capture_pageview: true,
     capture_pageleave: false,
-    ip: false,
+    capture_performance: false,
+    capture_heatmaps: false,
+    capture_dead_clicks: false,
+    capture_exceptions: false,
+    rageclick: false,
+    disable_surveys: true,
+    disable_product_tours: true,
+    disable_conversations: true,
+    disable_web_experiments: true,
+    disable_external_dependency_loading: true,
+    advanced_disable_flags: true,
+    save_referrer: false,
+    before_send: a.removeIp,
     autocapture: { dom_event_allowlist: ['click'], element_allowlist: ['button', 'a'] },
   });
 });
@@ -88,7 +100,13 @@ it('location_requested carries only the granted flag, never coordinates', async 
   expect(Object.keys(props)).toEqual(['granted']);
 });
 
-it('disclosure says no cookies and no personal data', () => {
+it('disclosure says no cookies and does not overclaim', () => {
   expect(a.ANALYTICS_DISCLOSURE).toMatch(/no cookies/i);
-  expect(a.ANALYTICS_DISCLOSURE).toMatch(/no personal data/i);
+  expect(a.ANALYTICS_DISCLOSURE).not.toMatch(/no personal data/i);
+});
+
+it('removeIp deletes $ip and passes null through', () => {
+  const result = { uuid: 'u', event: 'x', properties: { $ip: '1.2.3.4', keep: 1 } };
+  expect(a.removeIp(result)?.properties).toEqual({ keep: 1 });
+  expect(a.removeIp(null)).toBeNull();
 });
