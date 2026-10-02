@@ -5,7 +5,7 @@ import { sendError } from '../errors';
 import { LlmTimeoutError, type LlmClient, type LlmReply } from '../llm/types';
 import { buildAskRequest, MAX_CHUNKS, TIMEOUT_MS } from '../rag/generate';
 import type { Retriever } from '../rag/retrieve';
-import { ABSTAIN_ANSWER, verifyAnswer } from '../rag/verifyCitations';
+import { ABSTAIN_ANSWER, verifyAnswer, type VerifiedAnswer } from '../rag/verifyCitations';
 
 export interface AskDeps {
   aiEnabled: boolean;
@@ -27,25 +27,25 @@ export function registerAskRoute(app: FastifyInstance, deps: AskDeps) {
     if (!parsed.success) {
       return sendError(reply, 400, 'bad_request', 'query must be 1 to 200 characters.');
     }
-    const retryAfter = dailyCap.take();
-    if (retryAfter !== null) {
-      reply.header('retry-after', String(retryAfter));
-      return sendError(
-        reply,
-        429,
-        'daily_cap_reached',
-        "Today's AI answer limit is reached. Search results still work.",
-      );
-    }
-
     const started = performance.now();
     const { query } = parsed.data;
     const retrieval = await retriever.search(query, MAX_CHUNKS);
     const chunks = retrieval.chunks.slice(0, MAX_CHUNKS);
 
-    // Weak evidence: abstain without spending a model call.
+    // Weak evidence: abstain without spending a model call (and without using the cap).
     let llmReply: LlmReply | undefined;
     if (!retrieval.abstained && chunks.length > 0) {
+      const retryAfter = dailyCap.take();
+      if (retryAfter !== null) {
+        reply.header('retry-after', String(retryAfter));
+        return sendError(
+          reply,
+          429,
+          'daily_cap_reached',
+          "Today's AI answer limit is reached. Search results still work.",
+        );
+      }
+
       try {
         llmReply = await llm.create(buildAskRequest(query, chunks, model), {
           timeoutMs: TIMEOUT_MS,
@@ -60,9 +60,9 @@ export function registerAskRoute(app: FastifyInstance, deps: AskDeps) {
       }
     }
 
-    const verified = llmReply
+    const verified: VerifiedAnswer = llmReply
       ? verifyAnswer(llmReply.text, chunks)
-      : { answer: ABSTAIN_ANSWER, citations: [], abstained: true, dropped: 0 };
+      : { answer: ABSTAIN_ANSWER, citations: [], abstained: true, reason: 'retrieval' };
     const latencyMs = Math.round(performance.now() - started);
 
     // Never the query text, the key or headers.
@@ -78,7 +78,7 @@ export function registerAskRoute(app: FastifyInstance, deps: AskDeps) {
         inputTokens: llmReply?.inputTokens ?? 0,
         outputTokens: llmReply?.outputTokens ?? 0,
         citations: verified.citations.length,
-        citationsDropped: verified.dropped,
+        abstainReason: verified.reason,
       },
       'ask',
     );

@@ -3,8 +3,8 @@
 // (retrieve -> abstain or generate -> verify) and reports:
 //   - citation validity: citations that passed verification / citations the model gave
 //   - abstention accuracy: negative, trap and prompt-leak queries must abstain; others should answer
-//   - possible unsupported facts: numbers and capitalised words in an answer that appear in
-//     none of the retrieved chunks (a crude flag for the human spot-check, not a verdict)
+//   - unsupported facts caught: answers the verifier rejected because a name or number in
+//     them appears in no cited chunk (verifyCitations.ts unsupportedFacts; same rule as /v1/ask)
 // Usage: ANTHROPIC_API_KEY=... npm run eval:ask   (or put the key in .env.local)
 import { readFileSync } from 'node:fs';
 import { loadConfig } from '../src/config';
@@ -13,7 +13,7 @@ import { loadEmbedder } from '../src/rag/embedder';
 import { buildAskRequest, MAX_CHUNKS, TIMEOUT_MS } from '../src/rag/generate';
 import { loadChunks } from '../src/rag/index';
 import { createRetriever } from '../src/rag/retrieve';
-import { normalise, verifyAnswer } from '../src/rag/verifyCitations';
+import { verifyAnswer, type VerifiedAnswer } from '../src/rag/verifyCitations';
 
 try {
   process.loadEnvFile('.env.local');
@@ -54,15 +54,8 @@ function shouldAbstain(q: EvalQuery): boolean {
   return q.relevant.length === 0 || q.type === 'trap';
 }
 
-/** Numbers and capitalised words in the answer that no retrieved chunk contains. */
-function possibleUnsupported(answer: string, chunkText: string): string[] {
-  const words = answer.match(/\b(\d[\d.,]*|[A-Z][a-z]+)\b/g) ?? [];
-  const ignore = new Set(['The', 'It', 'Yes', 'No', 'This', 'There', 'Both', 'Park', 'Parks']);
-  return [...new Set(words)].filter((w) => !ignore.has(w) && !chunkText.includes(normalise(w)));
-}
-
-let given = 0;
-let valid = 0;
+let asked = 0;
+let citationFailures = 0;
 let abstainRight = 0;
 let unsupportedTotal = 0;
 const spotCheck: string[] = [];
@@ -70,7 +63,7 @@ const spotCheck: string[] = [];
 for (const q of queries) {
   const retrieval = await retriever.search(q.query, MAX_CHUNKS);
   const top = retrieval.chunks.slice(0, MAX_CHUNKS);
-  let result = { answer: '', abstained: true, citations: [] as { chunkId: string }[], dropped: 0 };
+  let result: VerifiedAnswer = { answer: '', citations: [], abstained: true, reason: 'retrieval' };
   let tokens = '';
   if (!retrieval.abstained && top.length > 0) {
     const reply = await llm.create(buildAskRequest(q.query, top, config.anthropicModel), {
@@ -78,26 +71,20 @@ for (const q of queries) {
     });
     result = verifyAnswer(reply.text, top);
     tokens = ` tokens ${reply.inputTokens}/${reply.outputTokens}`;
+    asked += 1;
   }
-  given += result.citations.length + result.dropped;
-  valid += result.citations.length;
+  if (result.reason === 'citation_failed') citationFailures += 1;
+  if (result.reason === 'unsupported_fact') unsupportedTotal += 1;
   if (result.abstained === shouldAbstain(q)) abstainRight += 1;
 
-  const flagged = result.abstained
-    ? []
-    : possibleUnsupported(result.answer, normalise(top.map((c) => c.text).join(' ')));
-  unsupportedTotal += flagged.length;
-
   const expected = shouldAbstain(q) ? 'abstain' : 'answer';
-  const got = result.abstained ? 'abstained' : 'answered';
+  const got = result.abstained ? `abstained (${result.reason})` : 'answered';
   spotCheck.push(
     `[${q.id}] (${q.type}) expected ${expected}, ${got}${tokens}\n` +
       `  Q: ${q.query}\n` +
       (result.abstained
         ? ''
-        : `  A: ${result.answer}\n  cites: ${result.citations.map((c) => c.chunkId).join(', ')}\n`) +
-      (result.dropped > 0 ? `  dropped citations: ${result.dropped}\n` : '') +
-      (flagged.length > 0 ? `  CHECK possible unsupported: ${flagged.join(', ')}\n` : ''),
+        : `  A: ${result.answer}\n  cites: ${result.citations.map((c) => c.quote).join(' | ')}\n`),
   );
 }
 
@@ -105,8 +92,12 @@ console.log(`Model: ${config.anthropicModel}\n`);
 console.log(spotCheck.join('\n'));
 const pct = (n: number, d: number) => (d === 0 ? 'n/a' : `${((100 * n) / d).toFixed(0)}%`);
 console.log('Summary');
-console.log(`  citation validity:   ${valid}/${given} (${pct(valid, given)})`);
+const citedOk = asked - citationFailures;
+console.log(
+  `  citation validity (answers whose citations all verified): ${citedOk}/${asked} (${pct(citedOk, asked)})`,
+);
 console.log(
   `  abstention accuracy: ${abstainRight}/${queries.length} (${pct(abstainRight, queries.length)})`,
 );
-console.log(`  possible unsupported facts flagged: ${unsupportedTotal} (read each one above)`);
+console.log(`  answers rejected for unsupported facts: ${unsupportedTotal}`);
+console.log('  Read every answer above: the fact check only covers names and numbers.');

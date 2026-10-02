@@ -22,7 +22,11 @@ function neutraliseTags(text: string): string {
   return text.replaceAll('<', '‹').replaceAll('>', '›');
 }
 
-/** The user message: each chunk labeled by its id, then the question in its own tag. */
+/**
+ * The user message: each chunk labeled by its id, then the question in its own tag.
+ * Chunk text is trusted data (built from db/parks.sample.json) and goes in as is, so
+ * quotes match it exactly; only the user's question is untrusted and gets escaped.
+ */
 export function buildUserMessage(query: string, chunks: Chunk[]): string {
   const chunkLines = chunks.map((chunk) => `<chunk id="${chunk.chunkId}">${chunk.text}</chunk>`);
   return [...chunkLines, '', `<question>${neutraliseTags(query)}</question>`].join('\n');

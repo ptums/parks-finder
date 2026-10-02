@@ -23,7 +23,7 @@ function fakeLlm(reply: string | (() => never)) {
 
 const goodReply = JSON.stringify({
   answer: 'Oak Park has a duck pond.',
-  citations: [{ chunkId: 'oak-park#overview', quote: 'a duck pond' }],
+  citations: [{ chunkId: 'oak-park#overview', quote: 'Shady meadows with a duck pond' }],
 });
 
 function app(overrides: Partial<AppDeps> = {}, env: NodeJS.ProcessEnv = {}) {
@@ -72,7 +72,13 @@ describe('POST /v1/ask', () => {
     const body = AskResponseSchema.parse(res.json());
     expect(body).toMatchObject({
       answer: 'Oak Park has a duck pond.',
-      citations: [{ parkId: 'oak-park', chunkId: 'oak-park#overview', quote: 'a duck pond' }],
+      citations: [
+        {
+          parkId: 'oak-park',
+          chunkId: 'oak-park#overview',
+          quote: 'Shady meadows with a duck pond',
+        },
+      ],
       abstained: false,
       mode: 'lexical',
       usage: { inputTokens: 120, outputTokens: 30 },
@@ -153,9 +159,21 @@ describe('POST /v1/ask', () => {
     expect(capped.headers['retry-after']).toBe('3600');
     expect(ErrorResponseSchema.parse(capped.json()).error.code).toBe('daily_cap_reached');
     expect((await search(server)).statusCode).toBe(200);
+    // An ask that abstains at retrieval never reaches the model, so the cap doesn't block it.
+    const offTopic = await ask(server, { query: 'What is the capital of France?' });
+    expect(offTopic.statusCode).toBe(200);
+    expect(offTopic.json().abstained).toBe(true);
 
     now = new Date('2026-10-03T00:00:05Z');
     expect((await ask(server, { query: 'duck pond' })).statusCode).toBe(200);
+  });
+
+  it('daily cap counts model calls only: abstained asks do not use it up', async () => {
+    const server = app({}, { AI_DAILY_REQUEST_CAP: '1' });
+    await ask(server, { query: 'What is the capital of France?' });
+    await ask(server, { query: 'What is the capital of France?' });
+    expect((await ask(server, { query: 'duck pond' })).statusCode).toBe(200);
+    expect((await ask(server, { query: 'duck pond' })).statusCode).toBe(429);
   });
 
   it('daily cap 0 means no limit', async () => {
@@ -177,6 +195,7 @@ describe('POST /v1/ask', () => {
       llmCalled: true,
       abstained: false,
       queryLength: 27,
+      citations: 1,
     });
     expect(entry.reqId).toBeDefined();
     expect(typeof entry.latencyMs).toBe('number');
