@@ -75,16 +75,17 @@ The brief: _"A modest app that works and is well explained is more useful than a
 `db/` is a plain folder holding the JSON; there is no database server.
 The brief says the sample _includes missing or empty values_, "fields may be missing or null, and arrays may be empty", and image URLs are placeholders ("placeholder images are fine"). The schema and data may be extended; any change must be described in the README ("Dataset changes").
 Fields: `id`, `name`, `description`, `location{lat,lng,address}`, `amenities[]` (slugs like `dog-run`), `hours` (free-text string), `images[]` (URLs), `acreage`, `rating`.
-| Field | Rule |
-|---|---|
-| any optional field | Missing, `null`, empty string, or empty array => treated as "not provided". |
-| `name`, `id`, `location` | The only fields a park may not lack to be usable. A record without `id`/`name` is reported by `validate:data`, and skipped by the app with a console warning. |
-| `amenities` | Display as human labels ("dog-run" -> "Dog run"). Unknown slugs still display, humanized. |
-| `hours` | Verbatim free text. Never parsed, reformatted, or "open now" computed. |
-| `images` | URLs may be placeholders or fail. On error show a labeled placeholder. Never hotlink-fix or invent images. Alt text: park name + "photo". |
-| `rating`, `acreage` | Show only when numeric. No stars-as-only-signal; include the number. |
-| contacts | There is no contact field in the data. The wireframe has a Contacts block: show "Contact information not listed" (or omit the section). Don't invent contacts. |
-| `location.address` | May be a neighborhood-level string; display as-is. |
+
+| Field                    | Rule                                                                                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| any optional field       | Missing, `null`, empty string, or empty array => treated as "not provided".                                                                                    |
+| `name`, `id`, `location` | The only fields a park may not lack to be usable. A record without `id`/`name` is reported by `validate:data`, and skipped by the app with a console warning.  |
+| `amenities`              | Display as human labels ("dog-run" -> "Dog run"). Unknown slugs still display, humanized.                                                                      |
+| `hours`                  | Verbatim free text. Never parsed, reformatted, or "open now" computed.                                                                                         |
+| `images`                 | URLs may be placeholders or fail. On error show a labeled placeholder. Never hotlink-fix or invent images. Alt text: park name + "photo".                      |
+| `rating`, `acreage`      | Show only when numeric. No stars-as-only-signal; include the number.                                                                                           |
+| contacts                 | There is no contact field in the data. The wireframe has a Contacts block: show "Contact information not listed" (or omit the section). Don't invent contacts. |
+| `location.address`       | May be a neighborhood-level string; display as-is.                                                                                                             |
 
 The Orchestrator profiles the file in Phase 1 (`docs/DATA_PROFILE.md`) and reports surprises at G1.
 

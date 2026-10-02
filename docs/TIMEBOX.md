@@ -17,6 +17,6 @@ Confirmed by the human at G0: orchestrator Opus 5.5 (`/model` set at session sta
 
 ## Usage readings
 
-| When | Session meter | Weekly (all models) | Weekly Fable | Note |
-| ---- | ------------- | ------------------- | ------------ | ---- |
-| G0 (+3) | 8% (resets 13:50 CDT) | 1% (resets Oct 2 15:00 CDT) | 0% | weekly meter resets mid-run |
+| When    | Session meter         | Weekly (all models)         | Weekly Fable | Note                        |
+| ------- | --------------------- | --------------------------- | ------------ | --------------------------- |
+| G0 (+3) | 8% (resets 13:50 CDT) | 1% (resets Oct 2 15:00 CDT) | 0%           | weekly meter resets mid-run |

@@ -112,20 +112,20 @@ export type AiStatus = 'idle' | 'loading' | 'ready' | 'error';
 export interface AppState {
   selectedParkId: string | null;
   selectSource: SelectSource | null;
-  returnFocusId: string | null;      // DOM id of the trigger; details focuses it on close
-  query: string;                     // standard text search
-  amenities: string[];               // selected slugs (AND)
-  sort: SortKey;                     // default 'name'
-  origin: { lat: number; lng: number } | null;  // "near me"; never leaves the browser
-  directoryOpen: boolean;            // initial: matchMedia('(min-width: 768px)')
-  aiAvailable: boolean;              // set only by T7's useCapabilities
-  mode: SearchMode;                  // default 'both'; effective mode is 'filters' unless aiAvailable
+  returnFocusId: string | null; // DOM id of the trigger; details focuses it on close
+  query: string; // standard text search
+  amenities: string[]; // selected slugs (AND)
+  sort: SortKey; // default 'name'
+  origin: { lat: number; lng: number } | null; // "near me"; never leaves the browser
+  directoryOpen: boolean; // initial: matchMedia('(min-width: 768px)')
+  aiAvailable: boolean; // set only by T7's useCapabilities
+  mode: SearchMode; // default 'both'; effective mode is 'filters' unless aiAvailable
   ai: {
     status: AiStatus;
     query: string;
-    resultIds: string[] | null;      // ranked parkIds from /v1/search; null = no AI search yet
+    resultIds: string[] | null; // ranked parkIds from /v1/search; null = no AI search yet
     matches: Record<string, string>; // parkId -> matchedText
-    answer: AskResponse | null;      // from shared/api.ts
+    answer: AskResponse | null; // from shared/api.ts
     errorCode: ErrorCode | null;
   };
 }
@@ -141,10 +141,10 @@ export type Action =
   | { type: 'capabilitiesResolved'; ai: boolean }
   | { type: 'setMode'; mode: SearchMode }
   | { type: 'aiSearchStarted'; query: string }
-  | { type: 'aiSearchSucceeded'; results: SearchResult[] }   // sets sort 'relevance'
+  | { type: 'aiSearchSucceeded'; results: SearchResult[] } // sets sort 'relevance'
   | { type: 'aiAnswerReceived'; answer: AskResponse }
   | { type: 'aiFailed'; code: ErrorCode }
-  | { type: 'reset' };   // clears query, amenities, sort->'name', selection, origin, ai.*; keeps mode and directoryOpen
+  | { type: 'reset' }; // clears query, amenities, sort->'name', selection, origin, ai.*; keeps mode and directoryOpen
 ```
 
 Hooks exported from `AppState.tsx`: `useAppState()`, `useDispatch()`, `useVisibleParks()`.
@@ -205,18 +205,18 @@ Recommendation: one `<dialog>` opened with `showModal()`, styled as a right-side
 
 One visually hidden `<div role="status" aria-live="polite" aria-atomic="true">`. `announce(text)` clears then sets after 50 ms so repeated identical messages are re-read. Owners call it; nothing else uses `aria-live`.
 
-| Event | Message | When | Owner |
-| --- | --- | --- | --- |
-| Result count after query/filter/sort change | "5 parks shown" / "No parks match. Try removing a filter." | 500 ms debounce after last change | T4 |
-| Reset | "Search and filters cleared. 12 parks shown." | on click | T4 |
-| Directory toggled | none (aria-expanded conveys it) | | |
-| Details open/close | none (focus moves; heading read) | | |
-| AI became available | "AI search is available." | once, on false->true | T7 |
-| Mode change | "Mode: AI search only" / "Filters only" / "AI and filters" | on change | T7 |
-| AI search done | "AI found 4 parks" | on result | T7 |
-| Answer ready | "Answer ready." (the answer text itself is NOT in the live region) | on result | T7 |
-| Errors | "AI search is unavailable right now. Standard search still works." / rate-limit / cap texts | on failure | T7 |
-| Location | "Sorted by distance from you" / "Location not available" | | T4 |
+| Event                                       | Message                                                                                     | When                              | Owner |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------- | ----- |
+| Result count after query/filter/sort change | "5 parks shown" / "No parks match. Try removing a filter."                                  | 500 ms debounce after last change | T4    |
+| Reset                                       | "Search and filters cleared. 12 parks shown."                                               | on click                          | T4    |
+| Directory toggled                           | none (aria-expanded conveys it)                                                             |                                   |       |
+| Details open/close                          | none (focus moves; heading read)                                                            |                                   |       |
+| AI became available                         | "AI search is available."                                                                   | once, on false->true              | T7    |
+| Mode change                                 | "Mode: AI search only" / "Filters only" / "AI and filters"                                  | on change                         | T7    |
+| AI search done                              | "AI found 4 parks"                                                                          | on result                         | T7    |
+| Answer ready                                | "Answer ready." (the answer text itself is NOT in the live region)                          | on result                         | T7    |
+| Errors                                      | "AI search is unavailable right now. Standard search still works." / rate-limit / cap texts | on failure                        | T7    |
+| Location                                    | "Sorted by distance from you" / "Location not available"                                    |                                   | T4    |
 
 ## 8. Reduced motion and polish
 
@@ -225,18 +225,38 @@ No animations are required. Any transition is declared only inside `@media (pref
 ## 9. Service contract (`shared/api.ts`, zod 4)
 
 ```ts
-CapabilitiesResponse = z.object({ ai: z.boolean() })
-SearchRequest  = z.object({ query: z.string().trim().min(1).max(200), limit: z.number().int().min(1).max(12).optional() })
-SearchResult   = z.object({ parkId: z.string(), score: z.number(), field: ChunkField, matchedText: z.string() })
-SearchResponse = z.object({ mode: z.enum(['hybrid','lexical']), results: z.array(SearchResult) })   // [] = abstained
-AskRequest     = z.object({ query: z.string().trim().min(1).max(200) })
-Citation       = z.object({ parkId: z.string(), chunkId: z.string(), quote: z.string() })
-AskResponse    = z.object({ answer: z.string(), citations: z.array(Citation), abstained: z.boolean(),
-                            mode: z.enum(['hybrid','lexical']), latencyMs: z.number(),
-                            usage: z.object({ inputTokens: z.number(), outputTokens: z.number() }).optional() })
-ErrorCode      = z.enum(['bad_request','rate_limited','daily_cap_reached','ai_unavailable','timeout','internal'])
-ErrorBody      = z.object({ error: z.object({ code: ErrorCode, message: z.string() }) })
-ChunkField     = z.enum(['overview','amenities','address','hours','size'])
+CapabilitiesResponse = z.object({ ai: z.boolean() });
+SearchRequest = z.object({
+  query: z.string().trim().min(1).max(200),
+  limit: z.number().int().min(1).max(12).optional(),
+});
+SearchResult = z.object({
+  parkId: z.string(),
+  score: z.number(),
+  field: ChunkField,
+  matchedText: z.string(),
+});
+SearchResponse = z.object({ mode: z.enum(['hybrid', 'lexical']), results: z.array(SearchResult) }); // [] = abstained
+AskRequest = z.object({ query: z.string().trim().min(1).max(200) });
+Citation = z.object({ parkId: z.string(), chunkId: z.string(), quote: z.string() });
+AskResponse = z.object({
+  answer: z.string(),
+  citations: z.array(Citation),
+  abstained: z.boolean(),
+  mode: z.enum(['hybrid', 'lexical']),
+  latencyMs: z.number(),
+  usage: z.object({ inputTokens: z.number(), outputTokens: z.number() }).optional(),
+});
+ErrorCode = z.enum([
+  'bad_request',
+  'rate_limited',
+  'daily_cap_reached',
+  'ai_unavailable',
+  'timeout',
+  'internal',
+]);
+ErrorBody = z.object({ error: z.object({ code: ErrorCode, message: z.string() }) });
+ChunkField = z.enum(['overview', 'amenities', 'address', 'hours', 'size']);
 ```
 
 Status codes: 200; 400 `bad_request` (zod failure, too long); 429 `rate_limited` + `Retry-After`; 429 `daily_cap_reached` + `Retry-After` (seconds to UTC midnight); 503 `ai_unavailable` (no key, or Anthropic failed); 504 `timeout`; 500 `internal`. `GET /healthz` -> `200 {"ok":true}`.
@@ -247,16 +267,16 @@ Status codes: 200; 400 `bad_request` (zod failure, too long); 429 `rate_limited`
 
 `useCapabilities` (T7): if `env.ragUrl` is empty, do nothing (`aiAvailable` stays false; no request). Otherwise `GET {ragUrl}/v1/capabilities` with a 4 s `AbortController` timeout; on network error/5xx retry at 2, 4, 8, 16, 30 s (5 tries), then stop. Dispatch `capabilitiesResolved` only on a valid zod-parsed answer. AI controls mount in their header slot. To avoid a layout jump, the header reserves the AiPanel's minimum height only while a capabilities request is in flight (an empty, `aria-hidden` spacer; no controls), and removes it if the answer is `ai:false` or the retries give up. Focus never moves when AI appears.
 
-| Situation | Capabilities | Standard UI | AI UI | Message |
-| --- | --- | --- | --- | --- |
-| No `VITE_RAG_URL` (zip default) | not requested | full | absent from DOM | none |
-| Server up, no key | `{ai:false}` | full | absent | none |
-| Service cold (Fly machine starting) | slow / retried | immediately | appears when resolved | "AI search is available." |
-| Service down / unreachable | retries then gives up | full | absent | none |
-| AI on, `/v1/search` or `/v1/ask` 503 or network error | already true | full | stays; list falls back to standard results | "AI search is unavailable right now. Standard search still works." |
-| Rate limited (429) | true | full | stays | "Too many AI searches. Try again in N seconds." |
-| Daily cap hit | true | full | stays; `/v1/search` still works (cap counts `/v1/ask` only) | "Today's AI answer limit is reached. Search results still shown." |
-| Embedding model fails to load | true | full | stays | none; responses report `mode: lexical` |
+| Situation                                             | Capabilities          | Standard UI | AI UI                                                       | Message                                                            |
+| ----------------------------------------------------- | --------------------- | ----------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| No `VITE_RAG_URL` (zip default)                       | not requested         | full        | absent from DOM                                             | none                                                               |
+| Server up, no key                                     | `{ai:false}`          | full        | absent                                                      | none                                                               |
+| Service cold (Fly machine starting)                   | slow / retried        | immediately | appears when resolved                                       | "AI search is available."                                          |
+| Service down / unreachable                            | retries then gives up | full        | absent                                                      | none                                                               |
+| AI on, `/v1/search` or `/v1/ask` 503 or network error | already true          | full        | stays; list falls back to standard results                  | "AI search is unavailable right now. Standard search still works." |
+| Rate limited (429)                                    | true                  | full        | stays                                                       | "Too many AI searches. Try again in N seconds."                    |
+| Daily cap hit                                         | true                  | full        | stays; `/v1/search` still works (cap counts `/v1/ask` only) | "Today's AI answer limit is reached. Search results still shown."  |
+| Embedding model fails to load                         | true                  | full        | stays                                                       | none; responses report `mode: lexical`                             |
 
 ## 11. Environment (Gate 0: `.env.local`, not `.env`)
 
@@ -304,18 +324,30 @@ export type AnalyticsEvent =
   | { name: 'park_selected'; props: { park_id: string; source: SelectSource } }
   | { name: 'details_closed'; props: { park_id: string; method: 'button' | 'escape' | 'backdrop' } }
   | { name: 'directory_toggled'; props: { open: boolean } }
-  | { name: 'search_submitted'; props: { mode: SearchMode; query_length: number; result_count: number; latency_ms: number; fallback_used: boolean } }
+  | {
+      name: 'search_submitted';
+      props: {
+        mode: SearchMode;
+        query_length: number;
+        result_count: number;
+        latency_ms: number;
+        fallback_used: boolean;
+      };
+    }
   | { name: 'search_result_clicked'; props: { park_id: string; rank: number } }
-  | { name: 'ai_answer_shown'; props: { abstained: boolean; citation_count: number; latency_ms: number } }
+  | {
+      name: 'ai_answer_shown';
+      props: { abstained: boolean; citation_count: number; latency_ms: number };
+    }
   | { name: 'ai_answer_feedback'; props: { helpful: boolean } }
   | { name: 'ai_unavailable'; props: { reason: ErrorCode | 'unreachable' } }
-  | { name: 'filter_applied'; props: { filter: 'amenity' | 'sort' | 'text'; value: string } }  // value = slug or sort key, never free text
+  | { name: 'filter_applied'; props: { filter: 'amenity' | 'sort' | 'text'; value: string } } // value = slug or sort key, never free text
   | { name: 'search_mode_changed'; props: { mode: SearchMode } }
   | { name: 'reset_clicked'; props: Record<string, never> }
   | { name: 'location_requested'; props: { granted: boolean } };
-export function initAnalytics(): void;       // no-op without env.posthogKey; called after first render
-export function track(e: AnalyticsEvent): void;  // never throws (try/catch), no-op until init succeeded
-export const ANALYTICS_DISCLOSURE: string;   // footer text
+export function initAnalytics(): void; // no-op without env.posthogKey; called after first render
+export function track(e: AnalyticsEvent): void; // never throws (try/catch), no-op until init succeeded
+export const ANALYTICS_DISCLOSURE: string; // footer text
 ```
 
 T1 ships the types and a no-op body so T2-T7 can call `track` from day one. T8 adds `posthog-js` with: memory persistence, `person_profiles: 'identified_only'` (never identify), Do Not Track respected, session recording disabled, autocapture limited to clicks on `button`/`a`, one pageview per load. T8 checks each option name against the current posthog-js docs (FR-31: don't guess). `posthog-js` is lazy-imported inside `initAnalytics` so it stays out of the critical path and out of Jest unless T8 tests it with a mock.
@@ -332,25 +364,25 @@ T1 ships the types and a no-op body so T2-T7 can call `track` from day one. T8 a
 
 ## 18. Tooling and pinned versions (confirmed with `npm view` on 2026-10-02)
 
-| Package | Pin | Note |
-| --- | --- | --- |
-| react, react-dom | ^19.3.0 | |
-| vite / @vitejs/plugin-react | ^8.3.2 / ^6.1.1 | plugin-react 6 requires vite 8 |
-| leaflet / react-leaflet / @types/leaflet | ^1.9.4 / ^5.0.0 / ^1.9.22 | react-leaflet 5 peers react 19 |
-| fastify / @fastify/cors / @fastify/rate-limit | ^5.12.5 / ^11.3.0 / ^11.2.0 | |
-| zod | ^4.6.5 | |
-| @anthropic-ai/sdk | ^0.131.0 | |
-| @huggingface/transformers | ^4.3.0 | postinstall needs network; never `--ignore-scripts` |
-| jest / jest-environment-jsdom / @swc/jest | ^30.5.2 / ^30.5.2 / ^0.2.39 | `jest.config.cjs` (package is `"type":"module"`) |
-| @testing-library/react / jest-dom / user-event / jest-axe | ^16.3.3 / ^7.0.1 / ^14.6.7 / ^11.0.0 | + @types/jest ^30, @types/jest-axe ^3.5.9 |
-| @playwright/test / @axe-core/playwright | ^1.63.0 / ^4.13.0 | |
-| posthog-js | ^1.435.7 | |
-| husky / lint-staged | ^9.1.7 / ^17.6.0 | |
-| eslint / @eslint/js | **^9.39.5** (not 10) | jsx-a11y peers eslint <= 9 |
-| typescript | **~6.0.3** (not 7) | typescript-eslint 8.71 peers `<6.1.0` |
-| typescript-eslint / eslint-plugin-jsx-a11y / eslint-plugin-react-hooks / eslint-config-prettier | ^8.71.0 / ^6.10.2 / ^7.1.1 / ^10.1.8 | |
-| prettier / tsup / tsx | ^3.9.9 / ^8.5.1 / ^4.23.15 | |
-| concurrently | ^10.0.5 | **addition** for `npm run dev` (web + server together) |
+| Package                                                                                         | Pin                                  | Note                                                   |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------ |
+| react, react-dom                                                                                | ^19.3.0                              |                                                        |
+| vite / @vitejs/plugin-react                                                                     | ^8.3.2 / ^6.1.1                      | plugin-react 6 requires vite 8                         |
+| leaflet / react-leaflet / @types/leaflet                                                        | ^1.9.4 / ^5.0.0 / ^1.9.22            | react-leaflet 5 peers react 19                         |
+| fastify / @fastify/cors / @fastify/rate-limit                                                   | ^5.12.5 / ^11.3.0 / ^11.2.0          |                                                        |
+| zod                                                                                             | ^4.6.5                               |                                                        |
+| @anthropic-ai/sdk                                                                               | ^0.131.0                             |                                                        |
+| @huggingface/transformers                                                                       | ^4.3.0                               | postinstall needs network; never `--ignore-scripts`    |
+| jest / jest-environment-jsdom / @swc/jest                                                       | ^30.5.2 / ^30.5.2 / ^0.2.39          | `jest.config.cjs` (package is `"type":"module"`)       |
+| @testing-library/react / jest-dom / user-event / jest-axe                                       | ^16.3.3 / ^7.0.1 / ^14.6.7 / ^11.0.0 | + @types/jest ^30, @types/jest-axe ^3.5.9              |
+| @playwright/test / @axe-core/playwright                                                         | ^1.63.0 / ^4.13.0                    |                                                        |
+| posthog-js                                                                                      | ^1.435.7                             |                                                        |
+| husky / lint-staged                                                                             | ^9.1.7 / ^17.6.0                     |                                                        |
+| eslint / @eslint/js                                                                             | **^9.39.5** (not 10)                 | jsx-a11y peers eslint <= 9                             |
+| typescript                                                                                      | **~6.0.3** (not 7)                   | typescript-eslint 8.71 peers `<6.1.0`                  |
+| typescript-eslint / eslint-plugin-jsx-a11y / eslint-plugin-react-hooks / eslint-config-prettier | ^8.71.0 / ^6.10.2 / ^7.1.1 / ^10.1.8 |                                                        |
+| prettier / tsup / tsx                                                                           | ^3.9.9 / ^8.5.1 / ^4.23.15           |                                                        |
+| concurrently                                                                                    | ^10.0.5                              | **addition** for `npm run dev` (web + server together) |
 
 Node 22.22 locally (`engines: ">=22.12"`, Vite 8's floor). Other gotchas T1 must respect: exclude `.worktrees/**` from ESLint, Prettier, Jest, tsconfig, Vite; `.prettierignore` includes `transcripts/`, `db/`, `package-lock.json`, `dist/`, `coverage/`, `.worktrees/`; jsx-a11y rules as errors and `--max-warnings=0`; `npx husky` in each new worktree (orchestrator).
 
@@ -365,18 +397,18 @@ Scripts: `dev` (concurrently dev:web dev:server) · `dev:web` (`vite --config we
 
 ## 20. Ticket split hint (`files_touched`)
 
-| Ticket | files_touched | Depends | Can run with |
-| --- | --- | --- | --- |
-| T1 foundation | root configs, `package*.json`, `.husky/**`, `.github/workflows/ci.yml`, `.github/pull_request_template.md`, `.claude/agents/**`, `scripts/**`, `shared/**`, `web/index.html`, `web/vite.config.ts`, `web/test/**`, `web/src/{main.tsx,env.ts,App.tsx,styles.css,analytics.ts}`, `web/src/{data,state,a11y}/**`, `web/src/search/filterParks.ts` + `sortParks.ts` (pass-through stubs), `server/tsup.config.ts`, `server/src/{index,config,app,types}.ts`, `server/src/routes/**`, `server/src/rag/index.ts`, `server/src/llm/index.ts` (stubs), `server/test/health.test.ts`, `server/test/capabilities.test.ts`, `e2e/fixtures.ts`, `e2e/smoke.spec.ts`, `.prettierignore`, `.dockerignore` | - | alone |
-| T2 list + details | `web/src/components/ParkList/**`, `web/src/components/ParkDetails/**`, `e2e/list-details.spec.ts` | T1 | T3, T10 |
-| T3 map | `web/src/components/ParkMap/**`, `e2e/map.spec.ts` | T1 | T2, T10 |
-| T4 search/filters/sort | `web/src/search/**`, `web/src/components/SearchBar/**`, `e2e/search.spec.ts` | T1 | T5, T10 |
-| T5 AI service 1 | `server/src/rag/{chunk,lexical,embedder,retrieve,index}.ts`, `server/src/routes/search.ts`, `server/scripts/{build-index,eval-retrieval}.ts`, `server/evals/**`, `server/test/{search,retrieve,chunk,lexical}.test.ts` | T1 | T2, T3, T4 |
-| T6 AI service 2 | `server/src/rag/{generate,verifyCitations}.ts`, `server/src/llm/**`, `server/src/dailyCap.ts`, `server/src/routes/ask.ts`, `server/scripts/eval-ask.ts`, `server/test/{ask,verifyCitations,dailyCap}.test.ts` | T5 | T7, T8 |
-| T7 AI UI | `web/src/ai/**`, `web/src/components/AiPanel/**`, `e2e/ai.spec.ts` | T1 (contract only; can mock the service) | T6, T8 |
-| T8 analytics | `web/src/analytics.ts`, `web/src/analytics.test.ts` | T1 | anything |
-| T9 a11y audit | `e2e/{a11y,tab-order,aria-snapshots}.spec.ts`, `e2e/__snapshots__/**`, `docs/VERIFICATION.md`; fixes go back to the owning ticket's files as small follow-up PRs | T2, T3, T4 | T6, T7 |
-| T10 deploy | `deploy/**`, `.github/workflows/deploy-*.yml` | T1 | everything |
+| Ticket                 | files_touched                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Depends                                  | Can run with |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------ |
+| T1 foundation          | root configs, `package*.json`, `.husky/**`, `.github/workflows/ci.yml`, `.github/pull_request_template.md`, `.claude/agents/**`, `scripts/**`, `shared/**`, `web/index.html`, `web/vite.config.ts`, `web/test/**`, `web/src/{main.tsx,env.ts,App.tsx,styles.css,analytics.ts}`, `web/src/{data,state,a11y}/**`, `web/src/search/filterParks.ts` + `sortParks.ts` (pass-through stubs), `server/tsup.config.ts`, `server/src/{index,config,app,types}.ts`, `server/src/routes/**`, `server/src/rag/index.ts`, `server/src/llm/index.ts` (stubs), `server/test/health.test.ts`, `server/test/capabilities.test.ts`, `e2e/fixtures.ts`, `e2e/smoke.spec.ts`, `.prettierignore`, `.dockerignore` | -                                        | alone        |
+| T2 list + details      | `web/src/components/ParkList/**`, `web/src/components/ParkDetails/**`, `e2e/list-details.spec.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | T1                                       | T3, T10      |
+| T3 map                 | `web/src/components/ParkMap/**`, `e2e/map.spec.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | T1                                       | T2, T10      |
+| T4 search/filters/sort | `web/src/search/**`, `web/src/components/SearchBar/**`, `e2e/search.spec.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | T1                                       | T5, T10      |
+| T5 AI service 1        | `server/src/rag/{chunk,lexical,embedder,retrieve,index}.ts`, `server/src/routes/search.ts`, `server/scripts/{build-index,eval-retrieval}.ts`, `server/evals/**`, `server/test/{search,retrieve,chunk,lexical}.test.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | T1                                       | T2, T3, T4   |
+| T6 AI service 2        | `server/src/rag/{generate,verifyCitations}.ts`, `server/src/llm/**`, `server/src/dailyCap.ts`, `server/src/routes/ask.ts`, `server/scripts/eval-ask.ts`, `server/test/{ask,verifyCitations,dailyCap}.test.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | T5                                       | T7, T8       |
+| T7 AI UI               | `web/src/ai/**`, `web/src/components/AiPanel/**`, `e2e/ai.spec.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | T1 (contract only; can mock the service) | T6, T8       |
+| T8 analytics           | `web/src/analytics.ts`, `web/src/analytics.test.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | T1                                       | anything     |
+| T9 a11y audit          | `e2e/{a11y,tab-order,aria-snapshots}.spec.ts`, `e2e/__snapshots__/**`, `docs/VERIFICATION.md`; fixes go back to the owning ticket's files as small follow-up PRs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | T2, T3, T4                               | T6, T7       |
+| T10 deploy             | `deploy/**`, `.github/workflows/deploy-*.yml`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | T1                                       | everything   |
 
 Slot contract: T1's `App.tsx` already imports `ParkList`, `ParkDetails`, `ParkMap`, `SearchBar`, `AiPanel` from their folders; T1 creates each as a one-line placeholder (`export function ParkList() { return null; }` style, with an `index.ts`), which the owning ticket replaces. `App.tsx` is never edited after T1 except by a T9 fix PR with the human's OK.
 
