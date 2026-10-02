@@ -22,6 +22,8 @@ module.exports = {
       testMatch: ['**/*.test.ts?(x)'],
       transform,
       testPathIgnorePatterns: ignore,
+      // react-leaflet ships ESM only; let @swc/jest compile it.
+      transformIgnorePatterns: ['/node_modules/(?!(react-leaflet|@react-leaflet)/)'],
       setupFilesAfterEnv: ['<rootDir>/web/test/setup.ts'],
       moduleNameMapper: {
         '\\.css$': '<rootDir>/web/test/fileStub.cjs',

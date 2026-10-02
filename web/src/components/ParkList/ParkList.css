@@ -1,0 +1,38 @@
+.park-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.park-list[hidden] {
+  display: none;
+}
+
+.directory-toggle,
+.park-list-item {
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+}
+
+.directory-toggle {
+  margin-bottom: 0.5rem;
+}
+
+.park-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 0.25rem;
+  text-align: left;
+}
+
+.park-list-note {
+  font-size: 0.875rem;
+}
