@@ -40,7 +40,7 @@ STATUS: proposed | applied (PR #) | rejected (why)
 14. **Husky hooks silently don't run in a new git worktree** (verified in a spike: a type-error commit passed). ACTION (applied): the orchestrator runs `npx husky` in every worktree; CI mirrors the hooks as the backstop; agents never use `--no-verify`.
 15. **Prettier would reformat `transcripts/` and `db/`**, silently editing submitted logs and the dataset. ACTION (applied): `.prettierignore` requirement and lint-staged glob rule.
 16. **Jest can't execute Vite's `import.meta.env`** (verified: ESM-syntax error). ACTION (applied): a single env module mapped to a stub in Jest; `.cjs` Jest config; mock ESM-only deps.
-17. **Simple Analytics doesn't autocapture clicks like PostHog did, and tracking needs no API key** (the key is only for reading stats). ACTION (applied): explicit semantic events through one guarded wrapper; keys stay local and optional; agents must check the current docs rather than guess attribute names.
+17. **The analytics provider changed twice (PostHog, then Simple Analytics, then PostHog) before the run.** ACTION (applied): all analytics specifics live in one wrapper module and a few env names, so a provider swap is a small change; agents must verify provider option names against current docs instead of guessing.
 18. **Safari skips links and buttons on Tab by default**, and Leaflet markers react to Enter but not Space. ACTION (applied): README note for interviewers, Space handling and tests for markers, skip links to bypass the marker tab stops.
 
 ## Log
