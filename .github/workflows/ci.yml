@@ -25,5 +25,12 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
+      - name: Cache the embedding model
+        uses: actions/cache@v4
+        with:
+          path: server/.cache/models
+          key: embedding-model-all-MiniLM-L6-v2
+      # Offline-capable: falls back to lexical-only with a warning if the model can't download.
+      - run: npm run eval:retrieval
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e

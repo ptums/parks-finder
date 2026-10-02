@@ -6,16 +6,25 @@ describe('loadConfig', () => {
       port: 8787,
       corsOrigin: 'http://localhost:5173',
       anthropicKey: '',
+      rateLimitPerMinute: 20,
+      modelCacheDir: 'server/.cache/models',
     });
   });
 
   it('reads values from the environment', () => {
-    expect(loadConfig({ PORT: '9000', CORS_ORIGIN: 'http://x', ANTHROPIC_API_KEY: ' k ' })).toEqual(
-      {
-        port: 9000,
-        corsOrigin: 'http://x',
-        anthropicKey: 'k',
-      },
-    );
+    const config = loadConfig({
+      PORT: '9000',
+      CORS_ORIGIN: 'http://x',
+      ANTHROPIC_API_KEY: ' k ',
+      RATE_LIMIT_PER_MINUTE: '5',
+      MODEL_CACHE_DIR: '/models',
+    });
+    expect(config).toEqual({
+      port: 9000,
+      corsOrigin: 'http://x',
+      anthropicKey: 'k',
+      rateLimitPerMinute: 5,
+      modelCacheDir: '/models',
+    });
   });
 });
