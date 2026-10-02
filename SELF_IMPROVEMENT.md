@@ -46,3 +46,11 @@ STATUS: proposed | applied (PR #) | rejected (why)
 ## Log
 
 (Entries from the run go below.)
+
+## Retro from the run (2026-10-02)
+
+- **A long human gate wait consumed half the time box.** The G1 reply arrived about 55 minutes after the G1 message, and wait time counts toward the 2 hours. No code existed at T+60. CHANGE: ask for a short time-limited default at G1 ("proceed with the recommended scope unless you object in 5 minutes") or schedule the run when the human is at the keyboard.
+- **The settings deny glob was too broad.** `Read(./.env.*)` also blocked `.env.example` (deny beats allow). Found when the PM agent hit permission denied (REVIEW_LOG #1). CHANGE: write explicit deny entries and test `.env.example` readability at G0.
+- **A vacuous e2e stub passed CI.** The OSM tile route glob never matched the real URL, so the "tiles fail" test proved nothing (REVIEW_LOG #6). Caught by reading, not by running. CHANGE: require stub tests to assert the interception count is greater than 0.
+- **Stacking PRs to save time.** #12 and #13 are stacked on #11, which saves waiting but forces merge order and raises rebase risk. CHANGE: decide at G3 whether to merge the foundation before dispatching dependents.
+- **The reviewer pass was skipped on T1 because of the clock** (REVIEW_LOG #4). The orchestrator's independent check was the only gate before human review. CHANGE: budget a review slot for the foundation ticket, or run it in parallel with T2/T3 work.
