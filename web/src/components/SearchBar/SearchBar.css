@@ -1,0 +1,49 @@
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.search-field input,
+.search-field select,
+.search-reset {
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+}
+
+.search-reset {
+  color: inherit;
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+}
+
+.search-amenities summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.search-amenities fieldset {
+  margin: 0 0 0.5rem;
+}
+
+.search-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.search-checkbox input {
+  width: 24px;
+  height: 24px;
+}
+
+.search-empty {
+  font-weight: bold;
+}
