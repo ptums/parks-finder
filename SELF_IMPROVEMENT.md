@@ -58,3 +58,11 @@ STATUS: proposed | applied (PR #) | rejected (why)
 ## 2026-10-02: Stacked PRs merged into the wrong base
 
 Stacked PRs (#12-#15) were opened against ticket branches. The human merged them as asked, but into those bases, not `main`. Fix: one combining PR to `main`. Next time, open stacked PRs against `main` (accepting the larger diff), or have the orchestrator retarget each one after its parent merges.
+
+## 2026-10-02: Integration runs keep catching what per-ticket checks miss
+
+Twice, two tickets that each passed alone failed together (a role+name locator matching a map marker; a hard-coded tab-order list missing a new button). Running the merged branches before opening the last PR caught both. Keep the integration step, and read the full Playwright summary (passed AND failed), never just the last line.
+
+## 2026-10-02: Deploy config needs execution, not just reading
+
+The Caddyfile looked right but had a directive-order bug that a passing health check would have hidden. Docker wasn't running locally, so the first real build was the CI deploy. Next time: start Docker (or a remote build-only run) before the deploy PR, and make the health endpoint return a body the check asserts on.
