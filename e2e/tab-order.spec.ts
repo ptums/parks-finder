@@ -56,6 +56,7 @@ test.describe('tab order', () => {
       'Search parks',
       'Amenities (0 selected)',
       'Sort by',
+      'Use my location',
       'Reset',
       toggleName,
       ...listIds,
