@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Park } from '../../../../shared/parks';
 import { amenityLabel } from '../../../../shared/amenities';
+import { track } from '../../analytics';
 import { focusById } from '../../a11y/focus';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useSelectedPark } from '../../state/AppState';
@@ -45,7 +46,10 @@ function ParkDialog({ park }: { park: Park }) {
         event.clientX > box.right ||
         event.clientY < box.top ||
         event.clientY > box.bottom;
-      if (outside) dispatch({ type: 'closeDetails' });
+      if (outside) {
+        track({ name: 'details_closed', props: { park_id: park.id, method: 'backdrop' } });
+        dispatch({ type: 'closeDetails' });
+      }
     };
     // Keeps state in sync if the browser closes the dialog itself. Closing twice is harmless.
     const onClose = () => dispatch({ type: 'closeDetails' });
@@ -55,9 +59,12 @@ function ParkDialog({ park }: { park: Park }) {
       dialog.removeEventListener('click', onClick);
       dialog.removeEventListener('close', onClose);
     };
-  }, [dispatch]);
+  }, [dispatch, park.id]);
 
-  const close = () => dispatch({ type: 'closeDetails' });
+  const close = (method: 'button' | 'escape') => {
+    track({ name: 'details_closed', props: { park_id: park.id, method } });
+    dispatch({ type: 'closeDetails' });
+  };
   const stats = sizeAndRating(park);
   const firstImage = park.images[0];
 
@@ -69,7 +76,7 @@ function ParkDialog({ park }: { park: Park }) {
       onCancel={(event) => {
         // Let React unmount the dialog instead of the browser closing it behind our back.
         event.preventDefault();
-        close();
+        close('escape');
       }}
     >
       <div className="park-details-body">
@@ -77,7 +84,7 @@ function ParkDialog({ park }: { park: Park }) {
           <h2 id="park-details-heading" ref={headingRef} tabIndex={-1}>
             {park.name}
           </h2>
-          <button type="button" className="park-details-close" onClick={close}>
+          <button type="button" className="park-details-close" onClick={() => close('button')}>
             Close
           </button>
         </div>

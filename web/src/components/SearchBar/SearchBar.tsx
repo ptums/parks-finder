@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { amenityLabel } from '../../../../shared/amenities';
 import type { Park } from '../../../../shared/parks';
+import { track } from '../../analytics';
 import { useAnnounce } from '../../a11y/useAnnounce';
 import { getPosition } from '../../geo/geolocation';
 import { PARKS } from '../../data/parks';
@@ -80,6 +81,7 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
     const position = await getPosition();
     if (myRequest !== requestId.current) return; // Reset happened while waiting.
     setPending(false);
+    track({ name: 'location_requested', props: { granted: position !== null } });
     const now = latest.current;
     if (!position) {
       setLocationError(true);
@@ -103,6 +105,7 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
   }
 
   function reset() {
+    track({ name: 'reset_clicked', props: {} });
     requestId.current++;
     setPending(false);
     setLocationError(false);
@@ -120,7 +123,11 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
           aria-label="Search parks" // same as the visible label; jsx-a11y needs it
           type="search"
           value={query}
-          onChange={(e) => dispatch({ type: 'setQuery', query: e.target.value })}
+          onChange={(e) => {
+            if (!query)
+              track({ name: 'filter_applied', props: { filter: 'text', value: 'changed' } });
+            dispatch({ type: 'setQuery', query: e.target.value });
+          }}
         />
       </label>
 
@@ -135,7 +142,10 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
                 aria-label={label}
                 type="checkbox"
                 checked={amenities.includes(slug)}
-                onChange={() => dispatch({ type: 'toggleAmenity', slug })}
+                onChange={() => {
+                  track({ name: 'filter_applied', props: { filter: 'amenity', value: slug } });
+                  dispatch({ type: 'toggleAmenity', slug });
+                }}
               />
               {label}
             </label>
@@ -148,7 +158,10 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
         <select
           id="park-sort"
           value={sort}
-          onChange={(e) => dispatch({ type: 'setSort', sort: e.target.value as SortKey })}
+          onChange={(e) => {
+            track({ name: 'filter_applied', props: { filter: 'sort', value: e.target.value } });
+            dispatch({ type: 'setSort', sort: e.target.value as SortKey });
+          }}
         >
           {(origin ? [...SORT_OPTIONS, DISTANCE_OPTION] : SORT_OPTIONS).map(({ value, label }) => (
             <option key={value} value={value}>

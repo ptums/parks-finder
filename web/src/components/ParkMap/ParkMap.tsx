@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { useEffect, useMemo, useRef, type Ref } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import type { Park } from '../../../../shared/parks';
+import { track } from '../../analytics';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import './icons';
@@ -42,8 +43,10 @@ function ParkMarker({ park, selected }: { park: ParkWithCoords; selected: boolea
   useEffect(() => {
     const icon = markerRef.current?.getElement();
     if (!icon) return;
-    const select = () =>
+    const select = () => {
+      track({ name: 'park_selected', props: { park_id: park.id, source: 'map' } });
       dispatch({ type: 'selectPark', id: park.id, source: 'map', returnFocusId: markerId });
+    };
     // Leaflet fires click on Enter only; Space needs our own handler (and stops page scroll).
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -70,8 +73,10 @@ function ParkMarker({ park, selected }: { park: ParkWithCoords; selected: boolea
       keyboard
       zIndexOffset={selected ? 1000 : 0}
       eventHandlers={{
-        click: () =>
-          dispatch({ type: 'selectPark', id: park.id, source: 'map', returnFocusId: markerId }),
+        click: () => {
+          track({ name: 'park_selected', props: { park_id: park.id, source: 'map' } });
+          dispatch({ type: 'selectPark', id: park.id, source: 'map', returnFocusId: markerId });
+        },
       }}
     />
   );
