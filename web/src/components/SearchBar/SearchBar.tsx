@@ -7,6 +7,7 @@ import { getPosition } from '../../geo/geolocation';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import { initialState } from '../../state/reducer';
+import { effectiveMode } from '../../state/selectors';
 import type { AppState, SortKey } from '../../state/types';
 import './SearchBar.css';
 
@@ -22,6 +23,7 @@ const SORT_WORDS: Record<SortKey, string> = {
   rating: 'rating',
   acreage: 'size',
   distance: 'name', // distance cannot stay once the location is gone
+  relevance: 'best match',
 };
 
 function unavailableText(sort: SortKey): string {
@@ -47,8 +49,18 @@ function amenityOptions(parks: Park[]): Array<{ slug: string; label: string }> {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** In AI-only mode the standard controls are absent from the DOM, not hidden. */
 export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
-  const { query, amenities, sort, origin } = useAppState();
+  const state = useAppState();
+  return effectiveMode(state) === 'ai' ? null : <StandardSearch parks={parks} />;
+}
+
+const BEST_MATCH_OPTION = { value: 'relevance' as SortKey, label: 'Best match' };
+
+function StandardSearch({ parks }: { parks: Park[] }) {
+  const state = useAppState();
+  const { query, amenities, sort, origin } = state;
+  const hasAiResults = effectiveMode(state) !== 'filters' && state.aiResults !== null;
   const [locationError, setLocationError] = useState(false);
   const [pending, setPending] = useState(false);
   const requestId = useRef(0); // lets Reset and Stop cancel a location request in flight
@@ -163,7 +175,11 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
             dispatch({ type: 'setSort', sort: e.target.value as SortKey });
           }}
         >
-          {(origin ? [...SORT_OPTIONS, DISTANCE_OPTION] : SORT_OPTIONS).map(({ value, label }) => (
+          {[
+            ...(hasAiResults ? [BEST_MATCH_OPTION] : []),
+            ...SORT_OPTIONS,
+            ...(origin ? [DISTANCE_OPTION] : []),
+          ].map(({ value, label }) => (
             <option key={value} value={value}>
               {label}
             </option>

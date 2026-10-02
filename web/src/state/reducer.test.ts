@@ -80,3 +80,53 @@ describe('reducer', () => {
     expect(reducer(state, { type: 'reset' })).toEqual(initialState(false));
   });
 });
+
+describe('reducer AI state', () => {
+  const finished = {
+    type: 'aiSearchFinished' as const,
+    results: [{ parkId: 'a', score: 1, field: 'overview' as const, matchedText: 'm' }],
+    answer: null,
+    error: null,
+  };
+
+  it('starts with AI off and mode Both', () => {
+    expect(initialState()).toMatchObject({ aiAvailable: false, mode: 'both', aiResults: null });
+  });
+
+  it('sorts by relevance when results arrive and drops it in Filters mode', () => {
+    let state = reducer(initialState(), finished);
+    expect(state.sort).toBe('relevance');
+    state = reducer(state, { type: 'setMode', mode: 'filters' });
+    expect(state.sort).toBe('name');
+  });
+
+  it('a failed search keeps no results', () => {
+    const state = reducer(initialState(), { ...finished, results: null, error: 'bad' });
+    expect(state).toMatchObject({
+      aiStatus: 'error',
+      aiResults: null,
+      aiError: 'bad',
+      sort: 'name',
+    });
+  });
+
+  it('reset clears AI search but keeps availability and mode', () => {
+    let state = reducer(initialState(), { type: 'aiAvailable' });
+    state = reducer(state, { type: 'setMode', mode: 'ai' });
+    state = reducer(state, { type: 'setAiQuery', query: 'lake' });
+    state = reducer(state, finished);
+    expect(reducer(state, { type: 'reset' })).toMatchObject({
+      aiAvailable: true,
+      mode: 'ai',
+      aiQuery: '',
+      aiResults: null,
+    });
+  });
+
+  it('aiCleared clears only the AI search', () => {
+    let state = reducer(initialState(), { type: 'setQuery', query: 'x' });
+    state = reducer(state, finished);
+    state = reducer(state, { type: 'aiCleared' });
+    expect(state).toMatchObject({ query: 'x', aiResults: null, aiStatus: 'idle', sort: 'name' });
+  });
+});

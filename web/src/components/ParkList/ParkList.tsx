@@ -1,11 +1,15 @@
 import type { Park } from '../../../../shared/parks';
 import { track } from '../../analytics';
 import { PARKS } from '../../data/parks';
+import { matchFor } from '../../search/aiResults';
+import { effectiveMode } from '../../state/selectors';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import './ParkList.css';
 
 export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
-  const { directoryOpen } = useAppState();
+  const state = useAppState();
+  const { directoryOpen } = state;
+  const aiResults = effectiveMode(state) === 'filters' ? null : state.aiResults;
   const dispatch = useDispatch();
   const visible = useVisibleParks(parks);
 
@@ -44,6 +48,9 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               }}
             >
               <span className="park-list-name">{park.name}</span>
+              {aiResults && (
+                <span className="park-list-note">{matchFor(aiResults, park.id)?.matchedText}</span>
+              )}
               {!park.coords && <span className="park-list-note">Not shown on map</span>}
             </button>
           </li>
