@@ -169,4 +169,4 @@ Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than t
 
 ## Disclosure
 
-The repo scaffold documents (the six root files, including the brief, requirements, process and agent rules) were prepared before the clock started; the application was built within the time box.
+The repo scaffold documents (`AGENTS.md`, `CLAUDE.md`, `PROCESS.md`, `REQUIREMENTS.md`, `SELF_IMPROVEMENT.md`, `.env.example`; the brief `PARKS_PROJECT.md` and the data came from Granicus) were prepared before the clock started; the application was built within the time box.
