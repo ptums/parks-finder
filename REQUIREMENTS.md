@@ -1,8 +1,25 @@
 # REQUIREMENTS.md
 
-Status: **DRAFT** (becomes APPROVED at Gate 1)
-Sources: `PARKS_PROJECTS.md` ([A], the Granicus "Find a Park" candidate brief), human additions ([H]), `db/parks.sample.json` (the brief calls it `assets/parks.sample.json`), wireframe.
+Status: **APPROVED** at Gate 1 (2026-10-02), with the amendments in section 0 below. Where section 0 conflicts with a later section, section 0 wins.
+Sources: `PARKS_PROJECT.md` ([A], the Granicus "Find a Park" candidate brief), human additions ([H]), `db/parks.sample.json` (the brief calls it `assets/parks.sample.json`), wireframe.
 Priority: **must** / **should** / **could**. Every FR maps to >= 1 ticket and >= 1 test.
+
+## 0. Gate 0 / Gate 1 amendments (approved by the human, 2026-10-02)
+
+Proposed by the pm and architect (`docs/PRD.md`, `docs/ARCHITECTURE.md` section 23); approved by the human ("approve all").
+
+1. **Env file is `.env.local`** at the repo root, not `.env`. Vite reads it via `envDir` = repo root; the server loads it with a guarded loader. A missing file never crashes either side. Every mention of `.env` in this file, AGENTS.md, and PROCESS.md means `.env.local`.
+2. **Analytics is PostHog only.** No Simple Analytics anywhere (`.env.example` updated).
+3. **FR-9 (standard search and filters) is MUST**, matching the PROCESS.md cut order (never cut). **FR-40 (Fly deploy) is SHOULD**: wanted, but if cut the README says so plainly.
+4. **FR-21: `/v1/ask` returns one JSON response, not SSE.** Body: `{answer, citations[{parkId, chunkId, quote}], abstained, usage, latencyMs}`. Citations are verified before anything is shown; nothing is streamed, so a screen reader never hears token-by-token text.
+5. **FR-25:** in AI mode the hidden standard filters are **absent from the DOM**, not CSS-hidden. AI results **filter** the markers and list (non-matching parks are not shown); they are not merely highlighted.
+6. **Details** open in a native modal `<dialog>` (side sheet on desktop, full screen on phone). Focus moves to the details heading on open, Esc closes, focus returns to the trigger.
+7. **One search input**: the wireframe's header search and directory filter are merged into a single text search.
+8. **Amenity filter semantics: AND** (a park must have every selected amenity). Missing values sort last.
+9. **FR-18 coverage:** thresholds 80/80/75/70 (statements/lines/functions/branches); they apply to `server/` once it contains code. Exclusions per `docs/ARCHITECTURE.md`.
+10. **New dev dependency `concurrently`** so `npm run dev` runs web and server together.
+11. The brief file is `PARKS_PROJECT.md`. PROCESS.md section 0 config values are read as bare names: owner `ptums`, repo `parks-finder`, Fly apps `peter-parks-web` and `peter-parks-rag`.
+12. The transcripts folder is `transcripts/` (renamed by the human at G0).
 
 ## 1. Goal
 
@@ -58,16 +75,17 @@ The brief: _"A modest app that works and is well explained is more useful than a
 `db/` is a plain folder holding the JSON; there is no database server.
 The brief says the sample _includes missing or empty values_, "fields may be missing or null, and arrays may be empty", and image URLs are placeholders ("placeholder images are fine"). The schema and data may be extended; any change must be described in the README ("Dataset changes").
 Fields: `id`, `name`, `description`, `location{lat,lng,address}`, `amenities[]` (slugs like `dog-run`), `hours` (free-text string), `images[]` (URLs), `acreage`, `rating`.
-| Field | Rule |
-|---|---|
-| any optional field | Missing, `null`, empty string, or empty array => treated as "not provided". |
-| `name`, `id`, `location` | The only fields a park may not lack to be usable. A record without `id`/`name` is reported by `validate:data`, and skipped by the app with a console warning. |
-| `amenities` | Display as human labels ("dog-run" -> "Dog run"). Unknown slugs still display, humanized. |
-| `hours` | Verbatim free text. Never parsed, reformatted, or "open now" computed. |
-| `images` | URLs may be placeholders or fail. On error show a labeled placeholder. Never hotlink-fix or invent images. Alt text: park name + "photo". |
-| `rating`, `acreage` | Show only when numeric. No stars-as-only-signal; include the number. |
-| contacts | There is no contact field in the data. The wireframe has a Contacts block: show "Contact information not listed" (or omit the section). Don't invent contacts. |
-| `location.address` | May be a neighborhood-level string; display as-is. |
+
+| Field                    | Rule                                                                                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| any optional field       | Missing, `null`, empty string, or empty array => treated as "not provided".                                                                                    |
+| `name`, `id`, `location` | The only fields a park may not lack to be usable. A record without `id`/`name` is reported by `validate:data`, and skipped by the app with a console warning.  |
+| `amenities`              | Display as human labels ("dog-run" -> "Dog run"). Unknown slugs still display, humanized.                                                                      |
+| `hours`                  | Verbatim free text. Never parsed, reformatted, or "open now" computed.                                                                                         |
+| `images`                 | URLs may be placeholders or fail. On error show a labeled placeholder. Never hotlink-fix or invent images. Alt text: park name + "photo".                      |
+| `rating`, `acreage`      | Show only when numeric. No stars-as-only-signal; include the number.                                                                                           |
+| contacts                 | There is no contact field in the data. The wireframe has a Contacts block: show "Contact information not listed" (or omit the section). Don't invent contacts. |
+| `location.address`       | May be a neighborhood-level string; display as-is.                                                                                                             |
 
 The Orchestrator profiles the file in Phase 1 (`docs/DATA_PROFILE.md`) and reports surprises at G1.
 

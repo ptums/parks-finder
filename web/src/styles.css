@@ -1,0 +1,76 @@
+:root {
+  --text: #1a1a1a;
+  --bg: #ffffff;
+  --accent: #0b5d1e;
+  --focus: #0033cc;
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+}
+
+*:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--text);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+header,
+footer {
+  padding: 0.5rem 1rem;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.map {
+  min-height: 60vh;
+}
+
+@media (min-width: 768px) {
+  main {
+    grid-template-columns: 22rem 1fr;
+  }
+}
+
+/* Transitions go only here, so reduced-motion users never get them. */
+@media (prefers-reduced-motion: no-preference) {
+  .skip-link {
+    transition: top 0.1s;
+  }
+}

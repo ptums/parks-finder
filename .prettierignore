@@ -1,0 +1,9 @@
+transcripts/
+db/
+package-lock.json
+dist/
+coverage/
+.worktrees/
+playwright-report/
+test-results/
+node_modules/
