@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import type { Park } from '../../../../shared/parks';
@@ -123,11 +123,11 @@ describe('SearchBar', () => {
 
   it('Enter in the search box does not submit the page', async () => {
     const { user } = setup();
-    const submit = jest.fn((e: Event) => e.preventDefault());
-    document.addEventListener('submit', submit);
-    await user.type(screen.getByLabelText('Search parks'), 'a{Enter}');
-    expect(screen.getByLabelText('Search parks')).toHaveValue('a');
-    document.removeEventListener('submit', submit);
+    const input = screen.getByLabelText('Search parks');
+    await user.type(input, 'a');
+    // fireEvent returns false when a handler called preventDefault.
+    expect(fireEvent.submit(input.closest('form') as HTMLFormElement)).toBe(false);
+    expect(input).toHaveValue('a');
   });
 
   describe('accessibility', () => {
@@ -148,6 +148,7 @@ describe('SearchBar', () => {
         </StateProvider>,
       );
       await user.click(screen.getByText(/Amenities/));
+      expect(container.querySelector('details')).toHaveAttribute('open');
       await user.click(screen.getByLabelText('Dog run'));
       expect(await axe(container)).toHaveNoViolations();
     });

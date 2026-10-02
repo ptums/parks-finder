@@ -4,7 +4,8 @@ import type { Park } from '../../../../shared/parks';
 import { useAnnounce } from '../../a11y/useAnnounce';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
-import type { SortKey } from '../../state/types';
+import { initialState } from '../../state/reducer';
+import type { AppState, SortKey } from '../../state/types';
 import './SearchBar.css';
 
 const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
@@ -14,6 +15,10 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
 ];
 
 const NO_MATCH = 'No parks match. Try removing a filter.';
+
+function settingsKey({ query, amenities, sort }: Pick<AppState, 'query' | 'amenities' | 'sort'>) {
+  return JSON.stringify([query, amenities, sort]);
+}
 
 function countText(count: number): string {
   if (count === 0) return NO_MATCH;
@@ -37,7 +42,7 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
 
   // Announce the count 500 ms after the last change. Reset announces on its own,
   // so it records the settings it announced and the effect skips them.
-  const settings = JSON.stringify([query, amenities, sort]);
+  const settings = settingsKey({ query, amenities, sort });
   const announced = useRef(settings);
   const count = visible.length;
   useEffect(() => {
@@ -50,7 +55,7 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
   }, [settings, count, announce]);
 
   function reset() {
-    announced.current = JSON.stringify(['', [], 'name']);
+    announced.current = settingsKey(initialState());
     dispatch({ type: 'reset' });
     announce(`Search and filters cleared. ${parks.length} parks shown.`);
   }
@@ -61,7 +66,7 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
         Search parks
         <input
           id="park-search"
-          aria-label="Search parks"
+          aria-label="Search parks" // same as the visible label; jsx-a11y needs it
           type="search"
           value={query}
           onChange={(e) => dispatch({ type: 'setQuery', query: e.target.value })}
