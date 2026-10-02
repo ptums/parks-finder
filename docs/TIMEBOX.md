@@ -10,6 +10,11 @@ Budget: 120 minutes wall clock, human wait time included. See PROCESS.md section
 +4 G0 approved: settings.json written; models confirmed; env file is `.env.local` (human decision); analytics = PostHog only. Phase 1 Analyze started.
 +10 G1 summary sent (PRD + ARCHITECTURE done).
 +67 G1 approved ("approve all"; the reply came ~55 min after the G1 message, and wait time counts). REQUIREMENTS.md APPROVED with section 0 amendments; settings deny rule fixed (REVIEW_LOG #1); .env.example updated. The T+60 core checkpoint has passed with no code yet, so the cut line is proposed at G2. Phase 2 Plan started.
++69 G2: human chose cut line A (strict 2h): core only (T1, T2, T3). T4, T5-T10 cut or deferred.
++71 T1 foundation started.
++86 T1 done and checked; PR #11 opened (CI green).
++91 to +93 T2 and T3 reviewed (reviewer, a11y-auditor), fixes sent back, PRs #12 and #13 opened (stacked on #11).
++93 (13:31 CDT) Wrap-up started: README, WALKTHROUGH, VERIFICATION, retro.
 
 ## Models and parallelism
 
