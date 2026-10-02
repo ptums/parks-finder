@@ -1,3 +1,5 @@
+import { ANALYTICS_DISCLOSURE } from './analytics';
+import { env } from './env';
 import { LiveRegionProvider } from './a11y/LiveRegion';
 import { SkipLink } from './a11y/SkipLink';
 import { ParkDetails } from './components/ParkDetails';
@@ -25,6 +27,7 @@ export function App() {
         <footer>
           <p>Park information comes from the supplied sample data.</p>
           <p>Map data from OpenStreetMap contributors.</p>
+          {env.posthogKey && <p>{ANALYTICS_DISCLOSURE}</p>}
         </footer>
         <ParkDetails />
       </LiveRegionProvider>
