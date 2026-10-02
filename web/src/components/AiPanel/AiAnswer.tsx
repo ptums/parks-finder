@@ -1,5 +1,5 @@
 import type { Park } from '../../../../shared/parks';
-import type { AiAnswer as Answer } from '../../ai/types';
+import type { AskResponse as Answer } from '../../../../shared/api';
 import { track } from '../../analytics';
 import { useDispatch } from '../../state/AppState';
 
@@ -15,10 +15,12 @@ export function AiAnswer({ answer, parks }: { answer: Answer; parks: Park[] }) {
         return park ? [{ citation, park }] : [];
       });
 
+  // All citations dropped client-side means nothing in the answer can be checked.
+  const showAbstained = answer.abstained || citations.length === 0;
   return (
     <section aria-labelledby="ai-answer-heading" className="ai-answer">
       <h2 id="ai-answer-heading">AI answer</h2>
-      <p>{answer.abstained ? ABSTAINED_TEXT : answer.answer}</p>
+      <p>{showAbstained ? ABSTAINED_TEXT : answer.answer}</p>
       {citations.length > 0 && (
         <>
           <h3 id="ai-sources-heading">Sources</h3>

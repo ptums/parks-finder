@@ -37,6 +37,7 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               type="button"
               id={`park-list-item-${park.id}`}
               className="park-list-item"
+              aria-describedby={aiResults ? `park-match-${park.id}` : undefined}
               onClick={() => {
                 track({ name: 'park_selected', props: { park_id: park.id, source: 'list' } });
                 dispatch({
@@ -48,11 +49,14 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               }}
             >
               <span className="park-list-name">{park.name}</span>
-              {aiResults && (
-                <span className="park-list-note">{matchFor(aiResults, park.id)?.matchedText}</span>
-              )}
+
               {!park.coords && <span className="park-list-note">Not shown on map</span>}
             </button>
+            {aiResults && (
+              <span id={`park-match-${park.id}`} className="park-list-note">
+                {matchFor(aiResults, park.id)?.matchedText}
+              </span>
+            )}
           </li>
         ))}
       </ul>

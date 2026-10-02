@@ -1,12 +1,13 @@
 import type { z } from 'zod';
 import {
+  AskResponseSchema,
   CapabilitiesResponseSchema,
   ErrorResponseSchema,
   SearchResponseSchema,
+  type AskResponse,
   type SearchResponse,
 } from '../../../shared/api';
 import { env } from '../env';
-import { AskResponseSchema, type AiAnswer } from './types';
 
 export type AiFailure = 'unavailable' | 'rate_limited' | 'daily_cap';
 
@@ -69,7 +70,7 @@ export function searchParks(query: string): Promise<SearchResponse> {
   return request('/v1/search', SearchResponseSchema, REQUEST_TIMEOUT_MS, { query });
 }
 
-export function askParks(query: string): Promise<AiAnswer> {
+export function askParks(query: string): Promise<AskResponse> {
   return request('/v1/ask', AskResponseSchema, REQUEST_TIMEOUT_MS, { query });
 }
 

@@ -23,6 +23,7 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
   useEffect(() => {
     status.current = aiStatus;
   }, [aiStatus]);
+  const input = useRef<HTMLInputElement>(null);
   const loading = aiStatus === 'loading';
 
   async function submit(event: React.FormEvent) {
@@ -62,32 +63,35 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
   }
 
   return (
-    <form role="search" aria-label="AI search" onSubmit={submit} aria-busy={loading}>
+    <form role="search" aria-label="AI search" onSubmit={submit}>
       <label htmlFor="ai-query" className="search-field">
         Ask about the parks
         <input
           id="ai-query"
+          ref={input}
           name="ai-query"
-          aria-label="Ask about the parks"
+          aria-label="Ask about the parks" // same as the visible label; jsx-a11y needs it
           type="text"
           maxLength={200}
           value={aiQuery}
           onChange={(e) => dispatch({ type: 'setAiQuery', query: e.target.value })}
         />
       </label>
-      <button type="submit" className="search-button" disabled={loading}>
+      <button type="submit" className="search-button" aria-disabled={loading}>
         Ask
       </button>
       {(aiQuery || aiResults) && (
         <button
           type="button"
           className="search-reset"
-          onClick={() => dispatch({ type: 'aiCleared' })}
+          onClick={() => {
+            dispatch({ type: 'aiCleared' });
+            input.current?.focus(); // this button disappears, so focus must not fall to the body
+          }}
         >
           Clear AI search
         </button>
       )}
-      {loading && <p>Searching…</p>}
     </form>
   );
 }

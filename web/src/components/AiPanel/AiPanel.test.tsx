@@ -12,6 +12,9 @@ const ASKED = {
   answer: 'Prospect Park has a lake.',
   citations: [{ parkId: 'prospect-park', chunkId: 'prospect-park#amenities', quote: 'lake' }],
   abstained: false,
+  mode: 'hybrid',
+  latencyMs: 9,
+  usage: { inputTokens: 10, outputTokens: 5 },
 };
 const FOUND = {
   mode: 'hybrid',
@@ -191,7 +194,9 @@ describe('asking', () => {
   it('shows the abstained text and no citations', async () => {
     await renderWithAi({
       ...OK,
-      ask: { body: { answer: '', citations: [], abstained: true } },
+      ask: {
+        body: { answer: '', citations: [], abstained: true, mode: 'hybrid', latencyMs: 3 },
+      },
     });
     await ask();
     expect(
@@ -209,6 +214,58 @@ describe('asking', () => {
     expect(screen.getByRole('textbox', { name: 'Ask about the parks' })).toHaveValue('');
     expect(listNames()).toHaveLength(12);
     expect(screen.getByRole('radio', { name: 'Both' })).toBeChecked();
+  });
+});
+
+describe('announcements and focus', () => {
+  async function settle(ms: number) {
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, ms));
+    });
+  }
+
+  it('the count announcement does not overwrite the AI message', async () => {
+    await renderWithAi();
+    await ask();
+    await screen.findByRole('heading', { name: 'AI answer' });
+    await settle(700);
+    expect(screen.getByRole('status')).toHaveTextContent('AI found 1 park. Answer ready.');
+  });
+
+  it('the count announcement does not overwrite the mode message', async () => {
+    await renderWithAi();
+    await ask();
+    await screen.findByRole('heading', { name: 'AI answer' });
+    await userEvent.click(screen.getByRole('radio', { name: 'Filters' }));
+    await settle(700);
+    expect(screen.getByRole('status')).toHaveTextContent('Filters only');
+  });
+
+  it('Clear AI search moves focus to the query input', async () => {
+    await renderWithAi();
+    await ask();
+    await screen.findByRole('heading', { name: 'AI answer' });
+    await userEvent.click(screen.getByRole('button', { name: 'Clear AI search' }));
+    expect(screen.getByRole('textbox', { name: 'Ask about the parks' })).toHaveFocus();
+  });
+
+  it('Ask is aria-disabled while loading and keeps focus', async () => {
+    await renderWithAi();
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    await ask();
+    const button = screen.getByRole('button', { name: 'Ask' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveFocus();
+    expect(screen.getByText('Searching…')).toBeInTheDocument();
+  });
+
+  it('shows the abstain text when no citation can be matched to a park', async () => {
+    const citations = [{ parkId: 'nowhere', chunkId: 'nowhere#overview', quote: 'q' }];
+    await renderWithAi({ ...OK, ask: { body: { ...ASKED, citations } } });
+    await ask();
+    expect(
+      await screen.findByText("I don't have that information in the park data."),
+    ).toBeVisible();
   });
 });
 
@@ -268,6 +325,24 @@ describe('accessibility', () => {
     await screen.findByRole('heading', { name: 'AI answer' });
     expect(await axe(container)).toHaveNoViolations();
     await userEvent.click(screen.getByRole('radio', { name: 'AI' }));
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('has no axe violations while loading or after an abstained answer', async () => {
+    const { container } = await renderWithAi();
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    await ask();
+    expect(screen.getByText('Searching…')).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('has no axe violations for an abstained answer', async () => {
+    const { container } = await renderWithAi({
+      ...OK,
+      ask: { body: { answer: '', citations: [], abstained: true, mode: 'hybrid', latencyMs: 3 } },
+    });
+    await ask();
+    await screen.findByText("I don't have that information in the park data.");
     expect(await axe(container)).toHaveNoViolations();
   });
 

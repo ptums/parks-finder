@@ -1,5 +1,4 @@
-import type { SearchResult } from '../../../shared/api';
-import type { AiAnswer } from '../ai/types';
+import type { AskResponse, SearchResult } from '../../../shared/api';
 
 export type SortKey = 'name' | 'rating' | 'acreage' | 'distance' | 'relevance';
 export type SelectSource = 'list' | 'map' | 'ai_citation';
@@ -24,7 +23,7 @@ export interface AppState {
   aiStatus: AiStatus;
   /** null = no AI search has run (or it failed); [] = the AI found nothing. */
   aiResults: SearchResult[] | null;
-  aiAnswer: AiAnswer | null;
+  aiAnswer: AskResponse | null;
   /** The message shown for the last AI failure. */
   aiError: string | null;
 }
@@ -44,7 +43,7 @@ export type Action =
   | {
       type: 'aiSearchFinished';
       results: SearchResult[] | null;
-      answer: AiAnswer | null;
+      answer: AskResponse | null;
       error: string | null;
     }
   | { type: 'aiCleared' }

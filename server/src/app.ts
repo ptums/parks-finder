@@ -46,7 +46,7 @@ export function buildApp({ config, retriever, logStream, llm, now }: AppDeps) {
   const aiEnabled = config.anthropicKey !== '';
   const dailyCap = createDailyCap(config.dailyRequestCap, now);
 
-  void app.register(cors, { origin: config.corsOrigin });
+  void app.register(cors, { origin: config.corsOrigin, exposedHeaders: ['Retry-After'] });
   void app.register(rateLimit, {
     max: config.rateLimitPerMinute,
     timeWindow: '1 minute',

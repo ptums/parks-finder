@@ -33,7 +33,8 @@ function unavailableText(sort: SortKey): string {
 const NO_MATCH = 'No parks match. Try removing a filter.';
 
 function settingsKey({ query, amenities, sort }: Pick<AppState, 'query' | 'amenities' | 'sort'>) {
-  return JSON.stringify([query, amenities, sort]);
+  // "Best match" is switched on and off by the AI, which announces for itself, so it counts as name.
+  return JSON.stringify([query, amenities, sort === 'relevance' ? 'name' : sort]);
 }
 
 function countText(count: number): string {

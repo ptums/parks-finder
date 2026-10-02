@@ -37,6 +37,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
+      // The inline VITE_RAG_URL=... below is POSIX-only (macOS/Linux); Windows would need cross-env.
       command:
         'VITE_RAG_URL=http://127.0.0.1:4999 npx vite build --config web/vite.config.ts --outDir ai-build/dist && npx vite preview --config web/vite.config.ts --outDir ai-build/dist --host 127.0.0.1 --port 4174',
       url: AI_URL,
