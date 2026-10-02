@@ -103,6 +103,20 @@ describe('createRetriever', () => {
     expect(result.abstained).toBe(true);
   });
 
+  it('falls back to lexical when the query embedding never finishes', async () => {
+    const retriever = createRetriever(testChunks, 0.3, 20);
+    let calls = 0;
+    await retriever.enableDense({
+      embed: (texts) => {
+        calls += 1;
+        return calls === 1 ? Promise.resolve(texts.map(() => [1, 0, 0])) : new Promise(() => {});
+      },
+    });
+    const result = await retriever.search('skateboarding', 5);
+    expect(result.mode).toBe('lexical');
+    expect(result.results[0]?.parkId).toBe('skate');
+  });
+
   it('falls back to lexical when the embedder throws at query time', async () => {
     const retriever = createRetriever(testChunks);
     let calls = 0;

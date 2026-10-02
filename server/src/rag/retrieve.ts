@@ -26,6 +26,17 @@ export interface Retriever {
  */
 export const COSINE_THRESHOLD = 0.3;
 export const RRF_K = 60;
+/** A query embedding normally takes a few ms; past this we answer lexically instead of waiting. */
+export const EMBED_TIMEOUT_MS = 3000;
+
+/** Resolves like promise, or rejects after ms. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('embedding timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 /** Dot product. The embedder normalises vectors, so this is the cosine similarity. */
 export function cosine(a: number[], b: number[]): number {
@@ -73,7 +84,11 @@ export function shouldAbstain(input: {
   return input.mode === 'lexical' || input.bestCosine < input.threshold;
 }
 
-export function createRetriever(chunks: Chunk[], threshold = COSINE_THRESHOLD) {
+export function createRetriever(
+  chunks: Chunk[],
+  threshold = COSINE_THRESHOLD,
+  embedTimeoutMs = EMBED_TIMEOUT_MS,
+) {
   const lexical = createLexicalIndex(chunks);
   let dense: { embedder: Embedder; vectors: number[][] } | undefined;
 
@@ -87,14 +102,14 @@ export function createRetriever(chunks: Chunk[], threshold = COSINE_THRESHOLD) {
   async function rankDense(query: string): Promise<ScoredChunk[] | undefined> {
     if (!dense) return undefined;
     try {
-      const [queryVector] = await dense.embedder.embed([query]);
+      const [queryVector] = await withTimeout(dense.embedder.embed([query]), embedTimeoutMs);
       if (!queryVector) return undefined;
       const vectors = dense.vectors;
       return chunks
         .map((chunk, i) => ({ chunk, score: cosine(queryVector, vectors[i] ?? []) }))
         .sort((a, b) => b.score - a.score);
     } catch {
-      return undefined; // a failing model degrades to lexical, never an error
+      return undefined; // a failing or slow model degrades to lexical, never an error
     }
   }
 

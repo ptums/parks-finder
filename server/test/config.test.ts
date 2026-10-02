@@ -8,6 +8,7 @@ describe('loadConfig', () => {
       anthropicKey: '',
       rateLimitPerMinute: 20,
       modelCacheDir: 'server/.cache/models',
+      onFly: false,
     });
   });
 
@@ -18,6 +19,7 @@ describe('loadConfig', () => {
       ANTHROPIC_API_KEY: ' k ',
       RATE_LIMIT_PER_MINUTE: '5',
       MODEL_CACHE_DIR: '/models',
+      FLY_APP_NAME: 'peter-parks-rag',
     });
     expect(config).toEqual({
       port: 9000,
@@ -25,6 +27,7 @@ describe('loadConfig', () => {
       anthropicKey: 'k',
       rateLimitPerMinute: 5,
       modelCacheDir: '/models',
+      onFly: true,
     });
   });
 });

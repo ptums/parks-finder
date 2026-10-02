@@ -11,7 +11,7 @@ export function registerSearchRoute(
   aiEnabled: boolean,
   retriever: Retriever | undefined,
 ) {
-  app.post('/v1/search', { bodyLimit: 2048 }, async (request, reply) => {
+  app.post('/v1/search', async (request, reply) => {
     if (!aiEnabled || !retriever) {
       return sendError(reply, 503, 'ai_unavailable', 'AI search is not available.');
     }

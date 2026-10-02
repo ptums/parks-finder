@@ -6,6 +6,7 @@ describe('tokenize', () => {
     expect(tokenize('Where are the Trails, and a dog-run?')).toEqual(['trail', 'dog', 'run']);
     expect(tokenize('Parks with a park')).toEqual([]);
     expect(tokenize('grass')).toEqual(['grass']);
+    expect(tokenize('Café Señor-Ñandú 24h')).toEqual(['café', 'señor', 'ñandú', '24h']);
   });
 });
 

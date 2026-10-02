@@ -64,9 +64,22 @@ describe('POST /v1/search', () => {
     expect(limited.statusCode).toBe(429);
     expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
     expect(ErrorResponseSchema.parse(limited.json()).error.code).toBe('rate_limited');
-    // A different client still gets through.
-    const other = await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.9' });
+  });
+
+  it('ignores a spoofed Fly-Client-IP when not running on Fly', async () => {
+    const server = app({}, { RATE_LIMIT_PER_MINUTE: '1' });
+    await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.1' });
+    const spoofed = await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.2' });
+    expect(spoofed.statusCode).toBe(429);
+  });
+
+  it('keys the limit on Fly-Client-IP when running on Fly', async () => {
+    const server = app({}, { RATE_LIMIT_PER_MINUTE: '1', FLY_APP_NAME: 'peter-parks-rag' });
+    await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.1' });
+    const other = await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.2' });
     expect(other.statusCode).toBe(200);
+    const same = await search(server, { query: 'skate' }, { 'fly-client-ip': '203.0.113.1' });
+    expect(same.statusCode).toBe(429);
   });
 
   it('stays in lexical mode when the embedder never loaded or fails', async () => {
@@ -88,9 +101,14 @@ describe('POST /v1/search', () => {
         throw new Error('boom');
       },
     };
-    const res = await search(app({ retriever: broken }), { query: 'skate' });
+    const lines: string[] = [];
+    const server = app({ retriever: broken, logStream: { write: (line) => lines.push(line) } });
+    const res = await search(server, { query: 'skate' });
     expect(res.statusCode).toBe(500);
     expect(res.json().error.code).toBe('internal');
+    const entry = lines.map((l) => JSON.parse(l)).find((l) => l.msg === 'unhandled error');
+    expect(entry).toMatchObject({ level: 50, statusCode: 500, errorMessage: 'boom' });
+    expect(lines.join('\n')).not.toContain('stack');
   });
 
   it('logs request id, route, latency and chunk ids, never the key, headers or query text', async () => {

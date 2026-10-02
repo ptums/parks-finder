@@ -15,10 +15,11 @@ export interface AppDeps {
   logStream?: { write(line: string): void };
 }
 
-// Fly's proxy puts the caller's address in Fly-Client-IP; locally it is the socket address.
-function clientKey(request: FastifyRequest): string {
+// On Fly the proxy sets Fly-Client-IP to the caller's address. Anywhere else any
+// caller could send that header to dodge the limit, so we use the socket address.
+function clientKey(request: FastifyRequest, onFly: boolean): string {
   const flyIp = request.headers['fly-client-ip'];
-  return typeof flyIp === 'string' && flyIp !== '' ? flyIp : request.ip;
+  return onFly && typeof flyIp === 'string' && flyIp !== '' ? flyIp : request.ip;
 }
 
 export function buildApp({ config, retriever, logStream }: AppDeps) {
@@ -41,10 +42,10 @@ export function buildApp({ config, retriever, logStream }: AppDeps) {
   void app.register(rateLimit, {
     max: config.rateLimitPerMinute,
     timeWindow: '1 minute',
-    keyGenerator: clientKey,
+    keyGenerator: (request) => clientKey(request, config.onFly),
   });
 
-  app.setErrorHandler((error: { statusCode?: number }, request, reply) => {
+  app.setErrorHandler((error: { statusCode?: number; message?: string }, request, reply) => {
     const status = error.statusCode ?? 500;
     if (status === 429) {
       const seconds = reply.getHeader('retry-after') ?? 60;
@@ -59,7 +60,8 @@ export function buildApp({ config, retriever, logStream }: AppDeps) {
       // Malformed JSON, wrong content type, or a body over 2 KB.
       return sendError(reply, status, 'bad_request', 'The request was not valid.');
     }
-    request.log.error({ statusCode: status }, 'unhandled error');
+    // Message only: never the stack, request, headers or query.
+    request.log.error({ statusCode: status, errorMessage: error.message }, 'unhandled error');
     return sendError(reply, 500, 'internal', 'Something went wrong.');
   });
 
