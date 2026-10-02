@@ -1,0 +1,74 @@
+.park-details {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-y: auto;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+.park-details::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+@media (min-width: 768px) {
+  .park-details {
+    width: 28rem;
+    margin-left: auto;
+  }
+}
+
+.park-details-body {
+  padding: 1rem;
+}
+
+.park-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.park-details-header h2 {
+  margin: 0;
+}
+
+.park-details-close {
+  min-height: 44px;
+  min-width: 44px;
+  box-sizing: border-box;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 2px solid #1a1a1a;
+  cursor: pointer;
+}
+
+.park-image-box {
+  aspect-ratio: 16 / 9;
+  margin: 1rem 0;
+  overflow: hidden;
+  background: #eee;
+}
+
+.park-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.park-image-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #1a1a1a;
+  box-sizing: border-box;
+}
