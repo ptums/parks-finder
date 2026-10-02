@@ -1,0 +1,6 @@
+{
+  "!(db|transcripts)/**/*.{ts,tsx,js,cjs}": ["eslint --fix --max-warnings=0", "prettier --write"],
+  "*.{ts,tsx,js,cjs}": ["eslint --fix --max-warnings=0", "prettier --write"],
+  "!(db|transcripts)/**/*.{json,md,css,yml}": "prettier --write",
+  "*.{json,md,css,yml}": "prettier --write"
+}
