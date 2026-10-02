@@ -1,0 +1,39 @@
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - 'db/**'
+      - 'deploy/web.Dockerfile'
+      - 'deploy/Caddyfile'
+      - 'deploy/fly.web.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      # VITE_RAG_URL is left empty on purpose: AI is not deployed, so no AI UI.
+      - run: >
+          flyctl deploy --remote-only
+          --config deploy/fly.web.toml
+          --dockerfile deploy/web.Dockerfile
+          --build-arg VITE_RAG_URL=
+          --build-arg VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
+          --build-arg VITE_POSTHOG_HOST=${{ vars.VITE_POSTHOG_HOST }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_WEB }}
+      - name: Health check
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors ${{ vars.SITE_URL }}/healthz
