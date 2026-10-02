@@ -64,7 +64,7 @@ describe('server', () => {
     }
   });
 
-  it('/v1/ask is a 503 stub until T6', async () => {
+  it('/v1/ask answers 503 ai_unavailable when no model client is configured', async () => {
     const app = buildApp({ config: loadConfig({ ANTHROPIC_API_KEY: 'k' }) });
     const res = await app.inject({ method: 'POST', url: '/v1/ask', payload: { query: 'hi' } });
     expect(res.statusCode).toBe(503);
