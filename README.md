@@ -116,7 +116,7 @@ Full table with evidence and honest status: `docs/VERIFICATION.md`. Summary, all
 - **T1-T3 integration (earlier):** `npm run check` exit 0, 77 tests; Playwright 20 passed (after fixing a cross-ticket test locator; see REVIEW_LOG #19). The submission was also unzipped into a clean folder: `npm ci` + `npm run check` exit 0, and the server with no key returned `{"ai":false}`.
 - **Focus return from a map marker:** an ad-hoc throwaway Playwright test (not committed) showed Enter on a marker opens the dialog, focus lands on the heading, Esc returns focus to the marker, and Space also opens it (2 passed, desktop and phone). Because it is not committed, it is not a regression test.
 - **Hooks:** a deliberate type-error commit was rejected by the pre-commit hook (TS2322, "husky - pre-commit script failed (code 2)"). The pre-push hook ran Jest on each push. CI was green on the foundation PR.
-- **Not checked:** a real screen reader, a real phone, 200% zoom, tile failure in a real browser, geolocation, any AI behavior, any deployment, or the unzipped submission running in a clean directory (the zip dry run is the human's final step).
+- **Not checked:** a real screen reader, a real phone, 200% zoom, tile failure in a real browser, geolocation, any AI behavior, any deployment. (A clean-room dry run of T1-T3 plus these docs was done: unzip, `npm ci`, `npm run check` and e2e passed; it should be repeated on the final merged `main`.)
 
 ## How I used AI
 
@@ -154,13 +154,13 @@ To test with a screen reader: Safari on macOS skips links and buttons on Tab unl
 
 ## Time spent
 
-| Item                                                                                   | Minutes                 |
-| -------------------------------------------------------------------------------------- | ----------------------- |
-| Preparation before the clock (six root docs, accounts, repo setup)                     | ____ (human to fill in) |
-| Build window: 11:58 CDT start, wrap-up began at T+93 (13:31 CDT)                       | about 93 (see below)    |
-| Of the build window, waiting for the human at the first review gate (~55 min, counted) | about 55                |
-| Human review, merge and final checks after wrap-up                                     | ____ (human to fill in) |
-| After the box: T4 search, filters, sort (human chose to continue at T+114)             | about 20 (beyond 2 h)   |
+| Item                                                                                   | Minutes                  |
+| -------------------------------------------------------------------------------------- | ------------------------ |
+| Preparation before the clock (six root docs, accounts, repo setup)                     | ____ (human to fill in)  |
+| Build window: 11:58 CDT start, wrap-up began at T+93 (13:31 CDT)                       | about 93 (see below)     |
+| Of the build window, waiting for the human at the first review gate (~55 min, counted) | about 55                 |
+| Human review, merge and final checks after wrap-up                                     | ____ (human to fill in)  |
+| After the box: T4 search, filters, sort (human chose to continue at T+114)             | about 8 (T+114 to T+122) |
 
 Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than two hours of working time went into building. **The 2-hour box was exceeded for T4 only**, at the human's explicit choice. Everything else was finished inside it.
 
