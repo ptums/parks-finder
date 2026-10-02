@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type Ref } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import type { Park } from '../../../../shared/parks';
 import { PARKS } from '../../data/parks';
@@ -61,7 +61,6 @@ function ParkMarker({ park, selected }: { park: ParkWithCoords; selected: boolea
     const icon = markerRef.current?.getElement();
     if (!icon) return;
     icon.classList.toggle(MARKER_SELECTED_CLASS, selected);
-    icon.setAttribute('aria-pressed', String(selected));
   }, [selected]);
 
   return (
@@ -78,7 +77,8 @@ function ParkMarker({ park, selected }: { park: ParkWithCoords; selected: boolea
   );
 }
 
-export function ParkMap({ parks = PARKS }: { parks?: Park[] }) {
+/** `mapRef` lets tests inspect the real Leaflet map. */
+export function ParkMap({ parks = PARKS, mapRef }: { parks?: Park[]; mapRef?: Ref<L.Map> }) {
   const state = useAppState();
   const visible = useVisibleParks(parks);
   const withCoords = parksWithCoords(visible);
@@ -96,6 +96,7 @@ export function ParkMap({ parks = PARKS }: { parks?: Park[] }) {
         Map of parks
       </h2>
       <MapContainer
+        ref={mapRef}
         className="map-canvas"
         {...(bounds ? { bounds } : { center: FALLBACK_CENTER, zoom: 10 })}
         {...motionOptions(reduced)}

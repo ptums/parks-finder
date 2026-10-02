@@ -1,3 +1,5 @@
+import type L from 'leaflet';
+import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import type { Park } from '../../../../shared/parks';
@@ -101,7 +103,6 @@ describe('ParkMap', () => {
     expect(marker('Alpha Park')).not.toHaveClass(MARKER_SELECTED_CLASS);
     fireEvent.click(screen.getByRole('button', { name: 'select b' }));
     expect(marker('Beta Park')).toHaveClass(MARKER_SELECTED_CLASS);
-    expect(marker('Beta Park')).toHaveAttribute('aria-pressed', 'true');
     expect(marker('Alpha Park')).not.toHaveClass(MARKER_SELECTED_CLASS);
   });
 
@@ -109,6 +110,27 @@ describe('ParkMap', () => {
     renderMap([park('c', 'No Coords Park')]);
     expect(document.querySelectorAll('.leaflet-marker-icon')).toHaveLength(0);
     expect(screen.getByRole('heading', { name: 'Map of parks' })).toBeInTheDocument();
+  });
+
+  it('turns off all map animations when reduced motion is requested', () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) =>
+      ({ matches: true, media: query }) as MediaQueryList) as typeof window.matchMedia;
+    const mapRef = createRef<L.Map>();
+    try {
+      render(
+        <StateProvider>
+          <ParkMap parks={parks} mapRef={mapRef} />
+        </StateProvider>,
+      );
+      expect(mapRef.current?.options).toMatchObject({
+        zoomAnimation: false,
+        fadeAnimation: false,
+        markerZoomAnimation: false,
+      });
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   describe('accessibility', () => {

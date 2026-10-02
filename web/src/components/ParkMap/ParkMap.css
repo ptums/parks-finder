@@ -14,7 +14,7 @@
   box-shadow: 0 0 0 5px #ffffff;
 }
 
-/* Selected marker: bigger with an outline, so it does not rely on color. */
+/* Selected marker: dashed outline and glow, so it does not rely on color. */
 .park-marker--selected {
   outline: 3px dashed #1a1a1a;
   outline-offset: 2px;

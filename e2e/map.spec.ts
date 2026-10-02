@@ -49,7 +49,6 @@ test.describe('map markers', () => {
       const scrollBefore = await page.evaluate(() => window.scrollY);
       await page.keyboard.press(key);
       await expect(first).toHaveClass(/park-marker--selected/);
-      await expect(first).toHaveAttribute('aria-pressed', 'true');
       expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
     });
   }
@@ -62,9 +61,14 @@ test.describe('map markers', () => {
   });
 
   test('the page stays usable when map tiles fail to load', async ({ page }) => {
-    await page.route('**/*.tile.openstreetmap.org/**', (route) => route.abort());
+    let aborted = 0;
+    await page.route('**/tile.openstreetmap.org/**', (route) => {
+      aborted++;
+      return route.abort();
+    });
     await page.goto('/');
     await expect(marker(page)).toBeVisible();
+    await expect.poll(() => aborted).toBeGreaterThan(0);
     await expect(page.getByRole('link', { name: 'OpenStreetMap', exact: true })).toBeVisible();
     await marker(page).focus();
     await page.keyboard.press('Enter');
