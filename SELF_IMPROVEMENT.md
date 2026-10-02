@@ -54,3 +54,7 @@ STATUS: proposed | applied (PR #) | rejected (why)
 - **A vacuous e2e stub passed CI.** The OSM tile route glob never matched the real URL, so the "tiles fail" test proved nothing (REVIEW_LOG #6). Caught by reading, not by running. CHANGE: require stub tests to assert the interception count is greater than 0.
 - **Stacking PRs to save time.** #12 and #13 are stacked on #11, which saves waiting but forces merge order and raises rebase risk. CHANGE: decide at G3 whether to merge the foundation before dispatching dependents.
 - **The reviewer pass was skipped on T1 because of the clock** (REVIEW_LOG #4). The orchestrator's independent check was the only gate before human review. CHANGE: budget a review slot for the foundation ticket, or run it in parallel with T2/T3 work.
+
+## 2026-10-02: Stacked PRs merged into the wrong base
+
+Stacked PRs (#12-#15) were opened against ticket branches. The human merged them as asked, but into those bases, not `main`. Fix: one combining PR to `main`. Next time, open stacked PRs against `main` (accepting the larger diff), or have the orchestrator retarget each one after its parent merges.
