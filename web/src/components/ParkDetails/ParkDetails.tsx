@@ -33,14 +33,28 @@ function ParkDialog({ park }: { park: Park }) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    dialog.showModal();
+    if (!dialog.open) dialog.showModal();
     headingRef.current?.focus();
-    // Only the backdrop reports the dialog itself as the click target.
-    const onBackdropClick = (event: MouseEvent) => {
-      if (event.target === dialog) dispatch({ type: 'closeDetails' });
+    // A click on the backdrop targets the dialog but lands outside its box. A click on blank
+    // space inside a full-height dialog also targets it, so check the coordinates too.
+    const onClick = (event: MouseEvent) => {
+      if (event.target !== dialog) return;
+      const box = dialog.getBoundingClientRect();
+      const outside =
+        event.clientX < box.left ||
+        event.clientX > box.right ||
+        event.clientY < box.top ||
+        event.clientY > box.bottom;
+      if (outside) dispatch({ type: 'closeDetails' });
     };
-    dialog.addEventListener('click', onBackdropClick);
-    return () => dialog.removeEventListener('click', onBackdropClick);
+    // Keeps state in sync if the browser closes the dialog itself. Closing twice is harmless.
+    const onClose = () => dispatch({ type: 'closeDetails' });
+    dialog.addEventListener('click', onClick);
+    dialog.addEventListener('close', onClose);
+    return () => {
+      dialog.removeEventListener('click', onClick);
+      dialog.removeEventListener('close', onClose);
+    };
   }, [dispatch]);
 
   const close = () => dispatch({ type: 'closeDetails' });

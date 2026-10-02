@@ -101,9 +101,28 @@ describe('ParkDetails', () => {
     expect(screen.getByRole('button', { name: 'Open full' })).toHaveFocus();
 
     await open(full);
-    fireEvent.click(screen.getByRole('dialog')); // target is the dialog itself: the backdrop
+    const dialog = screen.getByRole('dialog');
+    // jsdom has no layout, so give the dialog a box and click outside it (the backdrop).
+    dialog.getBoundingClientRect = () => new DOMRect(100, 0, 400, 800);
+    fireEvent.click(dialog, { clientX: 10, clientY: 10 });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open full' })).toHaveFocus();
+  });
+
+  it('does not close when blank space inside the dialog is clicked', async () => {
+    setup(full);
+    await open(full);
+    const dialog = screen.getByRole('dialog');
+    dialog.getBoundingClientRect = () => new DOMRect(100, 0, 400, 800);
+    fireEvent.click(dialog, { clientX: 200, clientY: 700 });
+    expect(dialog).toBeInTheDocument();
+  });
+
+  it('syncs state when the browser closes the dialog itself', async () => {
+    setup(full);
+    await open(full);
+    fireEvent(screen.getByRole('dialog'), new Event('close'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('does not close when the content is clicked', async () => {

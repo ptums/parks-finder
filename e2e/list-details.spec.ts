@@ -53,4 +53,26 @@ test.describe('list and details', () => {
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
   });
+
+  test('blank space inside the sheet keeps it open; the backdrop closes it', async ({
+    page,
+  }, testInfo) => {
+    await page.goto('/');
+    await openDirectory(page);
+    const first = page.locator('.park-list-item').first();
+    await first.click();
+    const dialog = page.getByRole('dialog');
+    const box = await dialog.boundingBox();
+    if (!box) throw new Error('dialog has no box');
+
+    // Near the bottom of the dialog, below the content.
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height - 5);
+    await expect(dialog).toBeVisible();
+
+    // The phone sheet is full screen, so only desktop has a backdrop to click.
+    if (testInfo.project.name === 'phone') return;
+    await page.mouse.click(5, 5);
+    await expect(dialog).toBeHidden();
+    await expect(first).toBeFocused();
+  });
 });

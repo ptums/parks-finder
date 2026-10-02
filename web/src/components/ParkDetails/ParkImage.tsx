@@ -11,7 +11,8 @@ export function ParkImage({ src, name }: { src: string; name: string }) {
           <span>Image unavailable</span>
         </div>
       ) : (
-        // The alt text format "Photo of {name}" is required by the ticket.
+        // img-redundant-alt: the ticket requires alt text of the form "Photo of {name}".
+        // no-noninteractive-element-interactions: onError is a load event, not user interaction.
         // eslint-disable-next-line jsx-a11y/img-redundant-alt, jsx-a11y/no-noninteractive-element-interactions
         <img src={src} alt={`Photo of ${name}`} loading="lazy" onError={() => setFailed(true)} />
       )}
