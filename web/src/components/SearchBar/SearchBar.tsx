@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { amenityLabel } from '../../../../shared/amenities';
 import type { Park } from '../../../../shared/parks';
 import { useAnnounce } from '../../a11y/useAnnounce';
+import { getPosition } from '../../geo/geolocation';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import { initialState } from '../../state/reducer';
@@ -13,6 +14,18 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: 'rating', label: 'Rating high-low' },
   { value: 'acreage', label: 'Size large-small' },
 ];
+
+const DISTANCE_OPTION = { value: 'distance' as SortKey, label: 'Distance' };
+const SORT_WORDS: Record<SortKey, string> = {
+  name: 'name',
+  rating: 'rating',
+  acreage: 'size',
+  distance: 'name', // distance cannot stay once the location is gone
+};
+
+function unavailableText(sort: SortKey): string {
+  return `Location unavailable. Parks are still listed by ${SORT_WORDS[sort]}.`;
+}
 
 const NO_MATCH = 'No parks match. Try removing a filter.';
 
@@ -34,7 +47,10 @@ function amenityOptions(parks: Park[]): Array<{ slug: string; label: string }> {
 }
 
 export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
-  const { query, amenities, sort } = useAppState();
+  const { query, amenities, sort, origin } = useAppState();
+  const [locationError, setLocationError] = useState(false);
+  const [pending, setPending] = useState(false);
+  const requestId = useRef(0); // lets Reset and Stop cancel a location request in flight
   const dispatch = useDispatch();
   const announce = useAnnounce();
   const visible = useVisibleParks(parks);
@@ -44,6 +60,8 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
   // so it records the settings it announced and the effect skips them.
   const settings = settingsKey({ query, amenities, sort });
   const announced = useRef(settings);
+  const latest = useRef({ query, amenities, sort });
+  latest.current = { query, amenities, sort };
   const count = visible.length;
   useEffect(() => {
     if (settings === announced.current) return;
@@ -54,7 +72,40 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
     return () => clearTimeout(timer);
   }, [settings, count, announce]);
 
+  async function useMyLocation() {
+    if (pending) return;
+    const myRequest = ++requestId.current;
+    setPending(true);
+    setLocationError(false);
+    const position = await getPosition();
+    if (myRequest !== requestId.current) return; // Reset happened while waiting.
+    setPending(false);
+    const now = latest.current;
+    if (!position) {
+      setLocationError(true);
+      announce(unavailableText(now.sort));
+      return;
+    }
+    // The location message replaces the count announcement the sort change would trigger.
+    announced.current = settingsKey({ ...now, sort: 'distance' });
+    dispatch({ type: 'setOrigin', origin: position });
+    dispatch({ type: 'setSort', sort: 'distance' });
+    announce('Sorted by distance from your location.');
+  }
+
+  function stopUsingLocation() {
+    requestId.current++;
+    const now = latest.current;
+    const newSort = now.sort === 'distance' ? 'name' : now.sort;
+    announced.current = settingsKey({ ...now, sort: newSort });
+    dispatch({ type: 'setOrigin', origin: null });
+    announce(`Stopped using your location. Parks are listed by ${SORT_WORDS[newSort]}.`);
+  }
+
   function reset() {
+    requestId.current++;
+    setPending(false);
+    setLocationError(false);
     announced.current = settingsKey(initialState());
     dispatch({ type: 'reset' });
     announce(`Search and filters cleared. ${parks.length} parks shown.`);
@@ -99,13 +150,25 @@ export function SearchBar({ parks = PARKS }: { parks?: Park[] }) {
           value={sort}
           onChange={(e) => dispatch({ type: 'setSort', sort: e.target.value as SortKey })}
         >
-          {SORT_OPTIONS.map(({ value, label }) => (
+          {(origin ? [...SORT_OPTIONS, DISTANCE_OPTION] : SORT_OPTIONS).map(({ value, label }) => (
             <option key={value} value={value}>
               {label}
             </option>
           ))}
         </select>
       </label>
+
+      {origin ? (
+        <button type="button" className="search-button" onClick={stopUsingLocation}>
+          Stop using my location
+        </button>
+      ) : (
+        <button type="button" className="search-button" aria-busy={pending} onClick={useMyLocation}>
+          Use my location
+        </button>
+      )}
+      {pending && <p>Finding your location…</p>}
+      {locationError && !origin && <p className="search-location-error">{unavailableText(sort)}</p>}
 
       <button type="button" className="search-reset" onClick={reset}>
         Reset

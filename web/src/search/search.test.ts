@@ -89,7 +89,7 @@ describe('sortParks', () => {
     ]);
   });
 
-  it('falls back to name for distance, which is not offered', () => {
+  it('falls back to name for distance when there is no origin', () => {
     expect(ids(sortParks(rated, withState({ sort: 'distance' })))).toEqual([
       'h',
       'l',
@@ -97,5 +97,21 @@ describe('sortParks', () => {
       'n',
       't',
     ]);
+  });
+
+  describe('by distance', () => {
+    const origin = { lat: 40, lng: -73 };
+    const placed = [
+      park('far', 'Far', { coords: { lat: 41, lng: -73 } }),
+      park('none', 'No Coords'),
+      park('near', 'Near', { coords: { lat: 40.1, lng: -73 } }),
+      park('tie-b', 'Bravo', { coords: { lat: 40.5, lng: -73 } }),
+      park('tie-a', 'Alpha', { coords: { lat: 40.5, lng: -73 } }),
+    ];
+
+    it('sorts nearest first, ties by name, parks without coordinates last', () => {
+      const sorted = sortParks(placed, withState({ sort: 'distance', origin }));
+      expect(ids(sorted)).toEqual(['near', 'tie-a', 'tie-b', 'far', 'none']);
+    });
   });
 });
