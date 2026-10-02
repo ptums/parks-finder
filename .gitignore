@@ -1,0 +1,60 @@
+# ============================================================================
+# Parks Finder .gitignore
+# MUST NOT ignore: transcripts/ (a required deliverable), db/ (the data),
+# package-lock.json, .env.example, .claude/agents, .claude/commands,
+# .claude/settings.json, .husky/ hook scripts, fly.toml files.
+# ============================================================================
+
+# ---- Secrets (never commit; the zip must contain no credentials) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+.fly/
+
+# ---- Dependencies ----------------------------------------------------------
+node_modules/
+
+# ---- Build output ----------------------------------------------------------
+dist/
+build/
+.vite/
+*.tsbuildinfo
+.cache/
+.huggingface/
+
+# ---- Test and tooling output ----------------------------------------------
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.eslintcache
+
+# ---- Parallel agent worktrees (the orchestrator creates these) -------------
+.worktrees/
+
+# ---- Husky generates its own runtime folder ---------------------------------
+.husky/_
+
+# ---- Claude Code local-only state (agents/commands/settings.json ARE committed)
+.claude/settings.local.json
+.claude/worktrees/
+
+# ---- Logs (NOT transcripts/) ------------------------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ---- Submission artifact (built outside the repo, ignored just in case) ----
+*.zip
+
+# ---- OS and editor ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
