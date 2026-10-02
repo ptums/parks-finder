@@ -1,0 +1,26 @@
+{
+	auto_https off
+}
+
+:8080 {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+
+	# Fly health check. An explicit handle block, because Caddy runs try_files
+	# (a rewrite) before respond, which would turn /healthz into /index.html.
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# Everything else: static files, with SPA fallback to index.html.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
