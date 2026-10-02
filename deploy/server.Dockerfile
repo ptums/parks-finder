@@ -20,7 +20,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/server/dist server/dist
 COPY --from=build /app/db db
-COPY --from=build /app/model-cache model-cache
+COPY --from=build --chown=node:node /app/model-cache model-cache
 USER node
 EXPOSE 8080
 CMD ["node", "server/dist/index.js"]
