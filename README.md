@@ -44,12 +44,13 @@ Built and checked (see "How I checked the result" for the evidence and its limit
 - Details in a native modal `<dialog>`: focus moves to the park heading on open; Esc, the Close button, or a click on the backdrop closes it; focus returns to whatever opened it, including a map marker.
 - Missing data: only fields that exist are shown; missing ones show "Not listed" or are omitted. Hours are shown verbatim, never parsed.
 - Images: all sample image URLs fail by design; a labeled placeholder is shown instead of a broken icon.
-- Skip links ("Skip to results", "Skip map"), landmarks, one `h1`, a polite live region (the region exists; count announcements belong to the cut search ticket).
+- Search, filters and sort (T4, built after the 2-hour box at the human's request): one text search over name, description, address and amenity labels (every word must match); an amenity checkbox filter (a park must have **all** selected amenities); sort by name, rating or size, with parks missing the value listed last; a Reset button. The result count is announced politely about half a second after you stop typing, and a visible "No parks match" message appears when nothing matches.
+- Skip links ("Skip to results", "Skip map"), landmarks, one `h1`, a polite live region.
 - Server skeleton: `/healthz` and `/v1/capabilities`.
 
 ## What I left out
 
-- **T4 Standard search, filters and sort.** Cut when the clock ran out. This is the biggest gap. The brief calls search and filters optional, but the app is poorer without them. The state selectors exist as pass-through stubs, so the list shows all parks.
+- **T4 search, filters and sort** were cut at the 2-hour mark, then built afterwards at the human's request (PR #15, see "Time spent"). Not built from that ticket: "near me" (sort by distance) and the AI "best match" sort.
 - **T9 Accessibility audit pass.** Not done: no aria snapshots, no tab-order test, no whole-page axe run in Playwright, and no per-criterion WCAG table beyond `docs/VERIFICATION.md`. Only jest-axe per component state and the keyboard e2e tests exist.
 - **T10 Fly.io deploy.** Cut. The Fly apps `peter-parks-web` and `peter-parks-rag` were created but never deployed. There is no live URL.
 - **T5-T7 AI search** (retrieval service, grounded answers, AI UI) and **T8 PostHog analytics.** Not started. The core ships with AI and analytics off, which is the intended fallback.
@@ -76,7 +77,7 @@ Why: roughly half the 2-hour box was spent waiting at the first human review gat
 5. Image URLs are placeholders that will not load; the labeled "image unavailable" placeholder is the expected experience.
 6. There is no contact data, so no contacts are shown ("Contact information not listed").
 7. The coordinate for `cedar-hill-nature-preserve` (40.7128, -74.0060) looks like a default NYC point rather than a real preserve location. It is shown as given.
-8. The brief says search and filters are optional and does not say which; the plan was text search, a multi-select amenity filter, and sort by name, rating, or acreage. This was **not built** (see above).
+8. The brief says search and filters are optional and does not say which; the plan was text search, a multi-select amenity filter, and sort by name, rating, or acreage. This was built after the time box (PR #15).
 9. "Complete ADA compliance" is interpreted as WCAG 2.2 Level AA with documented tests plus a human VoiceOver pass. No tool can certify ADA compliance and this README does not claim it.
 10. The interviewer evaluates from the zip and a 30-minute session. The core needs no keys.
 11. The brief calls the data file `assets/parks.sample.json`; here it lives at `db/parks.sample.json` and is read directly.
@@ -98,7 +99,8 @@ None. `db/parks.sample.json` is used verbatim and read directly (no copy, no der
 - The image alt text "Photo of X" is redundant to some screen readers ("image, Photo of X"). Kept deliberately.
 - Cedar Hill Nature Preserve's coordinate looks like a placeholder (see Assumptions).
 - No VoiceOver pass has been done yet (human to-do, script in `docs/VERIFICATION.md`).
-- No search or filters (see "What I left out").
+- Search is plain substring matching: "park" also matches any park with the "Skate park" amenity, and a one-letter query matches almost everything.
+- The Playwright sort test uses `selectOption` on desktop; using arrow keys on the sort `<select>` on desktop is a human check.
 - `npm run dev` runs the web app only.
 - OpenStreetMap tile usage policy applies.
 
@@ -109,7 +111,9 @@ Full table with evidence and honest status: `docs/VERIFICATION.md`. Summary, all
 - **Foundation (T1):** the orchestrator ran `npm ci` and `npm run check` independently: exit 0, 46 tests, 98.25% statement coverage.
 - **Map (T3):** `npm run check` exit 0, 61 tests; Playwright 12 passed.
 - **List and details (T2):** `npm run check` exit 0, 62 tests; Playwright 10 passed.
-- **All three merged on an integration branch:** `npm run check` exit 0, 77 tests; Playwright 20 passed (after fixing a cross-ticket test locator; see REVIEW_LOG #19). The submission was also unzipped into a clean folder: `npm ci` + `npm run check` exit 0, and the server with no key returned `{"ai":false}`.
+- **Search, filters, sort (T4, after the box):** `npm run check` exit 0, 83 tests; Playwright 14 passed, 0 failed. A mutation check (removing the form's submit handler) made the "Enter does not submit" test fail, showing it isn't vacuous.
+- **All four merged on an integration branch (T1-T4):** `npm run check` exit 0, 98 tests; Playwright 24 passed, 0 failed.
+- **T1-T3 integration (earlier):** `npm run check` exit 0, 77 tests; Playwright 20 passed (after fixing a cross-ticket test locator; see REVIEW_LOG #19). The submission was also unzipped into a clean folder: `npm ci` + `npm run check` exit 0, and the server with no key returned `{"ai":false}`.
 - **Focus return from a map marker:** an ad-hoc throwaway Playwright test (not committed) showed Enter on a marker opens the dialog, focus lands on the heading, Esc returns focus to the marker, and Space also opens it (2 passed, desktop and phone). Because it is not committed, it is not a regression test.
 - **Hooks:** a deliberate type-error commit was rejected by the pre-commit hook (TS2322, "husky - pre-commit script failed (code 2)"). The pre-push hook ran Jest on each push. CI was green on the foundation PR.
 - **Not checked:** a real screen reader, a real phone, 200% zoom, tile failure in a real browser, geolocation, any AI behavior, any deployment, or the unzipped submission running in a clean directory (the zip dry run is the human's final step).
@@ -118,12 +122,14 @@ Full table with evidence and honest status: `docs/VERIFICATION.md`. Summary, all
 
 - **Tool:** Claude Code CLI, plus a claude.ai planning chat (`transcripts/project-planning.md`).
 - **Models:** orchestrator Opus 5.5; architect, reviewer and a11y-auditor Opus 5.5; PM, ticketer, developers and this README (release role) Sonnet 5.5. Parallelism was capped at 2 agents.
-- **How directed:** I wrote the process, requirements and stack docs first (`PROCESS.md`, `AGENTS.md`, `REQUIREMENTS.md`). The orchestrator ran the phases with human gates; agents did analysis, tickets and implementation in separate git worktrees. The human merges every PR (#11 foundation, #12 map, #13 list and details; #12 and #13 are stacked on #11).
-- **How reviewed:** the orchestrator re-ran each check itself rather than trusting agent claims; read-only reviewer and a11y-auditor agents reviewed T2 and T3. T1 had no separate reviewer pass because of the clock (logged).
-- **What the reviews found** (18 rows in `docs/REVIEW_LOG.md`), for example:
+- **How directed:** I wrote the process, requirements and stack docs first (`PROCESS.md`, `AGENTS.md`, `REQUIREMENTS.md`). The orchestrator ran the phases with human gates; agents did analysis, tickets and implementation in separate git worktrees. The human merges every PR (#11 foundation, #12 map, #13 list and details, #15 search; #12 and #13 are stacked on #11, #15 on #13; #14 is these docs).
+- **How reviewed:** the orchestrator re-ran each check itself rather than trusting agent claims; read-only reviewer and a11y-auditor agents reviewed T2, T3 and T4. T1 had no separate reviewer pass because of the clock (logged).
+- **What the reviews found** (26 rows in `docs/REVIEW_LOG.md`), for example:
   - The e2e OSM tile stub glob never matched the real tile URL, so the "tiles fail" test was vacuous and passing CI hid it. Sent back to be fixed with an intercept-count assertion.
   - Clicking blank space inside the details dialog closed it (the click hit the `<dialog>` and was treated as a backdrop click). It affects every phone. A unit test could not tell the difference. Sent back for a coordinate-based check and a Playwright test.
   - `aria-pressed` on markers announced a toggle that does not toggle. Removed.
+  - Two vacuous T4 tests (an e2e step that silently fell back to `selectOption`, and a unit test whose own listener did the work). Both fixed; one confirmed by a mutation check.
+  - The orchestrator reported "18 passed" from the last output line, which hid 2 failures; the clean-room run caught it (#19).
   - The orchestrator's own `.env` deny rule also blocked `.env.example`. Fixed at G1.
   - Smaller items: a developer's wrong "no origin remote" claim, a developer editing a file outside the ticket, issues mislabeled `blocked`.
 - Process lessons are in `SELF_IMPROVEMENT.md`. Logs are in `transcripts/`.
@@ -142,8 +148,8 @@ To test with a screen reader: Safari on macOS skips links and buttons on Tab unl
 
 - **Hooks:** pre-commit runs lint-staged then a full typecheck; pre-push runs Jest.
 - **CI** (GitHub Actions) mirrors them: format check, lint, typecheck, Jest with coverage, build, Playwright.
-- **Jest + React Testing Library + jest-axe**: 77 tests on the integration branch; coverage thresholds enforced (foundation measured 98.25% statements).
-- **Playwright** (desktop and phone): 20 passed on the integration branch (T1+T2+T3).
+- **Jest + React Testing Library + jest-axe**: 98 tests on the integration branch (T1-T4); coverage thresholds enforced (foundation measured 98.25% statements).
+- **Playwright** (desktop and phone): 24 passed, 0 failed on the integration branch (T1-T4).
 - CI never calls an AI API (none is called at all).
 
 ## Time spent
@@ -154,12 +160,13 @@ To test with a screen reader: Safari on macOS skips links and buttons on Tab unl
 | Build window: 11:58 CDT start, wrap-up began at T+93 (13:31 CDT)                       | about 93 (see below)    |
 | Of the build window, waiting for the human at the first review gate (~55 min, counted) | about 55                |
 | Human review, merge and final checks after wrap-up                                     | ____ (human to fill in) |
+| After the box: T4 search, filters, sort (human chose to continue at T+114)             | about 20 (beyond 2 h)   |
 
-Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than two hours of working time went into building.
+Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than two hours of working time went into building. **The 2-hour box was exceeded for T4 only**, at the human's explicit choice. Everything else was finished inside it.
 
 ## Most important next steps before public use
 
-1. Build standard search, filters and sort (T4), with announcements of result counts.
+1. Finish the accessibility audit (T9): aria snapshots, a tab-order test, whole-page axe in Playwright, and the WCAG criteria table.
 2. Run the full VoiceOver pass and a real phone pass; add aria snapshots, a tab-order test, whole-page axe, and the WCAG criteria table.
 3. Deploy (Fly.io): add cold-start handling, cost caps and monitoring.
 4. If AI search is added: server-side key only, per-IP rate limit, daily cap, grounded answers verified against the data, offline evals.

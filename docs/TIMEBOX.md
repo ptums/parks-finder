@@ -22,6 +22,8 @@ Confirmed by the human at G0: orchestrator Opus 5.5 (`/model` set at session sta
 
 ## Usage readings
 
-| When    | Session meter         | Weekly (all models)         | Weekly Fable | Note                        |
-| ------- | --------------------- | --------------------------- | ------------ | --------------------------- |
-| G0 (+3) | 8% (resets 13:50 CDT) | 1% (resets Oct 2 15:00 CDT) | 0%           | weekly meter resets mid-run |
+| When                                                                                                                                                                         | Session meter         | Weekly (all models)         | Weekly Fable | Note                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | --------------------------- | ------------ | --------------------------- |
+| G0 (+3)                                                                                                                                                                      | 8% (resets 13:50 CDT) | 1% (resets Oct 2 15:00 CDT) | 0%           | weekly meter resets mid-run |
+| +98 G6 checklist sent; PRs #11-#14 open.                                                                                                                                     |
+| +114 Human chose to continue past the 2-hour box with T4 (search/filters/sort) only. T4 started, stacked on T2 (#13). The README time-spent section must report the overrun. |
