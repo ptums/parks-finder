@@ -11,3 +11,5 @@ playwright-report
 dist
 web/dist
 server/dist
+model-cache
+server/.cache

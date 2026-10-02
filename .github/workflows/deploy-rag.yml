@@ -1,0 +1,36 @@
+name: Deploy RAG service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'shared/**'
+      - 'db/**'
+      - 'deploy/server.Dockerfile'
+      - 'deploy/fly.rag.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-rag.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-rag
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: >
+          flyctl deploy --remote-only
+          --config deploy/fly.rag.toml
+          --dockerfile deploy/server.Dockerfile
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_RAG }}
+      - name: Health check
+        run: curl -fsS --retry 10 --retry-delay 6 --retry-all-errors ${{ vars.RAG_URL }}/healthz
+      - name: Capabilities check
+        run: curl -fsS ${{ vars.RAG_URL }}/v1/capabilities

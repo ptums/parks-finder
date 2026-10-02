@@ -25,12 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      # VITE_RAG_URL is left empty on purpose: AI is not deployed, so no AI UI.
       - run: >
           flyctl deploy --remote-only
           --config deploy/fly.web.toml
           --dockerfile deploy/web.Dockerfile
-          --build-arg VITE_RAG_URL=
+          --build-arg VITE_RAG_URL=${{ vars.RAG_URL }}
           --build-arg VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
           --build-arg VITE_POSTHOG_HOST=${{ vars.VITE_POSTHOG_HOST }}
         env:
