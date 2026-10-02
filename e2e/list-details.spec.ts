@@ -32,7 +32,7 @@ test.describe('list and details', () => {
     await page.goto('/');
     await openDirectory(page);
     // Highland Dog Park has an image URL (which fails in the sample data).
-    await page.getByRole('button', { name: 'Highland Dog Park' }).focus();
+    await page.locator('#park-list-item-highland-dog-park').focus();
     await page.keyboard.press('Space');
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText('Image unavailable')).toBeVisible();
