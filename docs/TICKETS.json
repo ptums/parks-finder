@@ -16,10 +16,21 @@
       "`.claude/agents/` has one file per role in AGENTS.md (orchestrator, pm, architect, ticketer, developer, rag-engineer, reviewer, a11y-auditor, tester, release) each with frontmatter name, description, tools, model; developer and tester have `model: sonnet`, all others `model: inherit`.",
       "`npm run dev`, `dev:web`, `dev:server`, `build`, `check`, `format`, `format:check`, `lint`, `typecheck`, `test`, `test:coverage`, `e2e`, `validate:data`, `build:index`, `eval:retrieval`, `eval:ask`, `prepare` all exist in package.json (the last four may be minimal placeholders that exit 0 with a message until T5/T6)."
     ],
-    "requirements": ["FR-4", "FR-6", "FR-18", "FR-19", "FR-23", "FR-27", "NFR-6"],
+    "requirements": [
+      "FR-4",
+      "FR-6",
+      "FR-18",
+      "FR-19",
+      "FR-23",
+      "FR-27",
+      "NFR-6"
+    ],
     "depends_on": [],
     "size": "M",
-    "labels": ["foundation", "size:M"],
+    "labels": [
+      "foundation",
+      "size:M"
+    ],
     "files_touched": [
       "package.json",
       "package-lock.json",
@@ -64,7 +75,7 @@
       "e2e/fixtures.ts",
       "e2e/smoke.spec.ts"
     ],
-    "issue": null
+    "issue": 1
   },
   {
     "id": "T2",
@@ -82,16 +93,29 @@
       "`e2e/list-details.spec.ts` (desktop and phone): Tab to a list item, Enter opens details, focus is on the heading, Esc closes and focus is back on the item; Space also opens; image placeholder is visible (sample image URLs fail). No keyboard trap.",
       "Geolocation is never requested on load (e2e runs with geolocation denied and the app still works)."
     ],
-    "requirements": ["FR-2", "FR-3", "FR-4", "FR-5", "FR-6", "FR-16", "FR-17"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-2",
+      "FR-3",
+      "FR-4",
+      "FR-5",
+      "FR-6",
+      "FR-16",
+      "FR-17"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "M",
-    "labels": ["core", "size:M"],
+    "labels": [
+      "core",
+      "size:M"
+    ],
     "files_touched": [
       "web/src/components/ParkList/**",
       "web/src/components/ParkDetails/**",
       "e2e/list-details.spec.ts"
     ],
-    "issue": null
+    "issue": 2
   },
   {
     "id": "T3",
@@ -109,12 +133,27 @@
       "jest-axe passes for the map section in default, with-selection and no-coords states.",
       "`e2e/map.spec.ts` (desktop and phone): Tab reaches markers after 'Skip map' is bypassed or entered, Enter and Space on a focused marker open the details dialog (when T2 is merged), focus never gets trapped in the map (Tab continues to the footer links); tiles are stubbed via e2e/fixtures.ts so no OSM traffic; a tile-failure case leaves the page usable."
     ],
-    "requirements": ["FR-1", "FR-4", "FR-5", "FR-16", "FR-17", "NFR-2"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-1",
+      "FR-4",
+      "FR-5",
+      "FR-16",
+      "FR-17",
+      "NFR-2"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "M",
-    "labels": ["core", "size:M"],
-    "files_touched": ["web/src/components/ParkMap/**", "e2e/map.spec.ts"],
-    "issue": null
+    "labels": [
+      "core",
+      "size:M"
+    ],
+    "files_touched": [
+      "web/src/components/ParkMap/**",
+      "e2e/map.spec.ts"
+    ],
+    "issue": 3
   },
   {
     "id": "T4",
@@ -133,12 +172,28 @@
       "jest-axe passes for: default, amenities expanded with selections, no results, location denied (if built).",
       "`e2e/search.spec.ts` (desktop and phone): keyboard-only flow types a query, tabs to amenities, selects one with Space, changes sort with arrow keys, presses Reset; asserts the live region text and visible list count at each step."
     ],
-    "requirements": ["FR-9", "FR-10", "FR-4", "FR-16", "FR-17", "NFR-4"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-9",
+      "FR-10",
+      "FR-4",
+      "FR-16",
+      "FR-17",
+      "NFR-4"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "M",
-    "labels": ["core", "size:M"],
-    "files_touched": ["web/src/search/**", "web/src/components/SearchBar/**", "e2e/search.spec.ts"],
-    "issue": null
+    "labels": [
+      "core",
+      "size:M"
+    ],
+    "files_touched": [
+      "web/src/search/**",
+      "web/src/components/SearchBar/**",
+      "e2e/search.spec.ts"
+    ],
+    "issue": 4
   },
   {
     "id": "T5",
@@ -154,10 +209,24 @@
       "evals/queries.json has at least 18 queries covering keyword, paraphrase with no keyword overlap, negative/off-topic, and prompt-injection ('ignore previous instructions') cases; README-ready results table printed by the script; `git diff db/` is empty.",
       "Logs include request id, route, latency and retrieved chunk ids and never headers or key values (test captures a log line and greps for the key string)."
     ],
-    "requirements": ["FR-20", "FR-23", "FR-24", "FR-26", "FR-27", "FR-18", "NFR-5"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-20",
+      "FR-23",
+      "FR-24",
+      "FR-26",
+      "FR-27",
+      "FR-18",
+      "NFR-5"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "M",
-    "labels": ["ai", "stretch", "size:M"],
+    "labels": [
+      "ai",
+      "stretch",
+      "size:M"
+    ],
     "files_touched": [
       "server/src/rag/chunk.ts",
       "server/src/rag/lexical.ts",
@@ -173,7 +242,7 @@
       "server/test/chunk.test.ts",
       "server/test/lexical.test.ts"
     ],
-    "issue": null
+    "issue": 5
   },
   {
     "id": "T6",
@@ -188,10 +257,24 @@
       "Request uses temperature 0, max_tokens 400 and no tools (assert on the arguments the fake client receives); logs contain request id, latency, token usage, retrieved ids and never keys.",
       "`npm run eval:ask` exists, requires a real key, exits with a clear message and code 1 when none is set, and prints citation validity, abstention accuracy and unsupported-fact count when run (manual; evidence goes in docs/VERIFICATION.md as agent/human-run)."
     ],
-    "requirements": ["FR-21", "FR-22", "FR-23", "FR-24", "FR-26", "FR-18", "NFR-5"],
-    "depends_on": ["T5"],
+    "requirements": [
+      "FR-21",
+      "FR-22",
+      "FR-23",
+      "FR-24",
+      "FR-26",
+      "FR-18",
+      "NFR-5"
+    ],
+    "depends_on": [
+      "T5"
+    ],
     "size": "M",
-    "labels": ["ai", "stretch", "size:M"],
+    "labels": [
+      "ai",
+      "stretch",
+      "size:M"
+    ],
     "files_touched": [
       "server/src/rag/generate.ts",
       "server/src/rag/verifyCitations.ts",
@@ -203,7 +286,7 @@
       "server/test/verifyCitations.test.ts",
       "server/test/dailyCap.test.ts"
     ],
-    "issue": null
+    "issue": 6
   },
   {
     "id": "T7",
@@ -221,12 +304,31 @@
       "jest-axe passes for: AI available idle, loading, results with answer, abstained, each error state, and each of the three modes.",
       "`e2e/ai.spec.ts` (desktop and phone) with page.route fakes: keyboard-only flow switches modes with arrows, submits a query, tabs to a citation and opens details; plus a spec asserting the default run (unreachable service) shows no AI controls."
     ],
-    "requirements": ["FR-25", "FR-28", "FR-16", "FR-17", "FR-18", "NFR-2", "NFR-5"],
-    "depends_on": ["T1", "T4"],
+    "requirements": [
+      "FR-25",
+      "FR-28",
+      "FR-16",
+      "FR-17",
+      "FR-18",
+      "NFR-2",
+      "NFR-5"
+    ],
+    "depends_on": [
+      "T1",
+      "T4"
+    ],
     "size": "M",
-    "labels": ["ai", "stretch", "size:M"],
-    "files_touched": ["web/src/ai/**", "web/src/components/AiPanel/**", "e2e/ai.spec.ts"],
-    "issue": null
+    "labels": [
+      "ai",
+      "stretch",
+      "size:M"
+    ],
+    "files_touched": [
+      "web/src/ai/**",
+      "web/src/components/AiPanel/**",
+      "e2e/ai.spec.ts"
+    ],
+    "issue": 7
   },
   {
     "id": "T8",
@@ -242,12 +344,29 @@
       "`npm run build` with no VITE_POSTHOG_KEY succeeds and the e2e smoke run makes no request to a posthog host.",
       "PR description lists the posthog-js doc URL checked for each option and states what was NOT verified in a live PostHog project."
     ],
-    "requirements": ["FR-30", "FR-31", "FR-32", "FR-33", "FR-34", "NFR-2", "NFR-3"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-30",
+      "FR-31",
+      "FR-32",
+      "FR-33",
+      "FR-34",
+      "NFR-2",
+      "NFR-3"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "S",
-    "labels": ["analytics", "stretch", "size:S"],
-    "files_touched": ["web/src/analytics.ts", "web/src/analytics.test.ts"],
-    "issue": null
+    "labels": [
+      "analytics",
+      "stretch",
+      "size:S"
+    ],
+    "files_touched": [
+      "web/src/analytics.ts",
+      "web/src/analytics.test.ts"
+    ],
+    "issue": 8
   },
   {
     "id": "T9",
@@ -264,10 +383,26 @@
       "docs/VERIFICATION.md contains one row per applicable WCAG 2.2 A/AA criterion listed in FR-16 with method, label (automated/agent/human) and evidence link or command; human-only rows say HUMAN TODO; the scripted VoiceOver walkthrough has numbered steps with the expected announcement for each (rotor landmarks and headings, Tab/Option+Tab, operate controls, open/close details, hear 'Not listed' for a sparse park).",
       "Findings are listed (blocker / should-fix / nit) in the PR for the orchestrator to append to docs/REVIEW_LOG.md; any blocker has a filed follow-up issue and is not hidden."
     ],
-    "requirements": ["FR-4", "FR-5", "FR-12", "FR-16", "FR-17", "FR-18", "FR-28", "NFR-1"],
-    "depends_on": ["T2", "T3", "T4"],
+    "requirements": [
+      "FR-4",
+      "FR-5",
+      "FR-12",
+      "FR-16",
+      "FR-17",
+      "FR-18",
+      "FR-28",
+      "NFR-1"
+    ],
+    "depends_on": [
+      "T2",
+      "T3",
+      "T4"
+    ],
     "size": "M",
-    "labels": ["core", "size:M"],
+    "labels": [
+      "core",
+      "size:M"
+    ],
     "files_touched": [
       "e2e/a11y.spec.ts",
       "e2e/tab-order.spec.ts",
@@ -275,7 +410,7 @@
       "e2e/__snapshots__/**",
       "docs/VERIFICATION.md"
     ],
-    "issue": null
+    "issue": 9
   },
   {
     "id": "T10",
@@ -291,15 +426,23 @@
       "A short section in the PR lists the exact `fly apps create` and `fly secrets set` commands for the human (CORS_ORIGIN, AI_DAILY_REQUEST_CAP; ANTHROPIC_API_KEY set by the human only) and the rollback command from ARCHITECTURE.md section 19; the ticket does not run them.",
       "`npm run check` still green (deploy files do not break format:check or lint)."
     ],
-    "requirements": ["FR-40", "NFR-5"],
-    "depends_on": ["T1"],
+    "requirements": [
+      "FR-40",
+      "NFR-5"
+    ],
+    "depends_on": [
+      "T1"
+    ],
     "size": "M",
-    "labels": ["deploy", "size:M"],
+    "labels": [
+      "deploy",
+      "size:M"
+    ],
     "files_touched": [
       "deploy/**",
       ".github/workflows/deploy-web.yml",
       ".github/workflows/deploy-rag.yml"
     ],
-    "issue": null
+    "issue": 10
   }
 ]
