@@ -27,3 +27,7 @@ Confirmed by the human at G0: orchestrator Opus 5.5 (`/model` set at session sta
 | G0 (+3)                                                                                                                                                                      | 8% (resets 13:50 CDT) | 1% (resets Oct 2 15:00 CDT) | 0%           | weekly meter resets mid-run |
 | +98 G6 checklist sent; PRs #11-#14 open.                                                                                                                                     |
 | +114 Human chose to continue past the 2-hour box with T4 (search/filters/sort) only. T4 started, stacked on T2 (#13). The README time-spent section must report the overrun. |
+| +132 Human asked to continue with T9, T10 and near-me. #16 merged (stacked PRs brought to main).                                                                             |
+| +133 T9 and T10 started in parallel; near-me after T10 finished.                                                                                                             |
+| +~150 PRs #17 (deploy), #18 (T9), #19 (near-me) opened; #17 merged and deployed; live smoke test passed.                                                                     |
+| +~165 #18 and #19 merged; redeploy passed; full e2e (80) passed against the live site. Final docs PR.                                                                        |

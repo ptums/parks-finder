@@ -2,15 +2,16 @@
 
 ## 1. Demo script (about 4 minutes)
 
-Run `npm ci` then `npm run dev:web`, open http://localhost:5173. No keys needed.
+Use the live site https://peter-parks-web.fly.dev (open it a minute early: the machine auto-stops when idle), or run `npm ci` then `npm run dev:web` and open http://localhost:5173. No keys needed.
 
-1. **Core view (30s).** Map with 12 markers and the park directory. Say plainly: search, filters and AI were cut; the list shows all parks.
+1. **Core view (30s).** Map with 12 markers and the park directory. Say plainly: AI search and analytics were cut; within the 2-hour box only map, list and details were done, and the rest came after.
 2. **List to details (45s).** Click a park in the directory. A modal dialog opens, focus moves to the park heading. Point out "Not listed" for missing fields, hours shown verbatim, and the "image unavailable" placeholder (all sample images fail by design).
 3. **Close and focus return (30s).** Press Esc: dialog closes, focus is back on the list button. Reopen and click the backdrop, then click blank space inside the dialog (it must NOT close; this was a bug caught in review).
 4. **Keyboard on the map (60s).** Use Tab from the top: "Skip to results", "Skip map", then the markers. Enter or Space on a marker opens the same details. Esc returns focus to that marker. Note the selected-marker outline.
 5. **Sparse park (30s).** Open `old-mill-botanical-garden` (null description) and `cedar-hill-nature-preserve` (null rating, suspect coordinate).
-6. **Phone width (30s).** Narrow the window or use device emulation: directory collapses, details is a full-screen sheet.
-7. **Gates (30s).** Show `docs/REVIEW_LOG.md` and `docs/VERIFICATION.md` (honest HUMAN TODO rows).
+6. **Search, filters, sort, near-me (45s).** Type "dog", tick an amenity with Space, sort by rating, press Reset; with a screen reader you hear one result count after typing stops. Press "Use my location" and deny it: a message appears and nothing breaks.
+7. **Phone width (30s).** Narrow the window or use device emulation: directory collapses, details is a full-screen sheet.
+8. **Gates (30s).** Show `docs/REVIEW_LOG.md` and `docs/VERIFICATION.md` (honest HUMAN TODO rows).
 
 ## 2. Architecture in plain language
 
@@ -18,7 +19,8 @@ Run `npm ci` then `npm run dev:web`, open http://localhost:5173. No keys needed.
 - `shared/parks.ts` validates and normalizes each park (null or empty becomes "missing"); parks with no valid coordinate are listed but not mapped.
 - The app shell has named slots (list, map, details, search bar) so tickets did not edit the same files. One selected-park state feeds the list, the map and the dialog, so any trigger opens the same details.
 - Focus helpers in `web/src/a11y/focus.ts` return focus to the element that opened the dialog.
-- The server reports `{ai:false}` without a key and the web app renders no AI UI at all. This part is a skeleton: no AI feature exists yet.
+- The server reports `{ai:false}` without a key and the web app renders no AI UI at all. This part is a skeleton: no AI feature exists yet, and the server is not deployed.
+- Deploy: a two-stage Docker image (Node builds the static site, Caddy serves it on 8080 with `/healthz` and security headers) on one auto-stopping Fly machine. GitHub Actions deploys on merge to `main` and curls `/healthz`. Rollback: `fly releases -a peter-parks-web --image`, then `fly deploy --image <previous>`.
 
 ## 3. Decisions and trade-offs
 
@@ -26,21 +28,22 @@ Run `npm ci` then `npm run dev:web`, open http://localhost:5173. No keys needed.
 - Real focusable markers with Space handling, plus "Skip map": simple and testable, but 12 tab stops in data order.
 - Read the data file directly and normalize in memory: no derived file to keep in sync, but every consumer must go through the normalizer.
 - Gates and hooks over speed: the orchestrator re-ran every check itself. This cost time but caught real problems (REVIEW_LOG).
-- Stacked PRs (#12 and #13 on #11) to save time: faster, but they must be merged in order.
+- Stacked PRs (#12 and #13 on #11) to save time: faster, but they were merged into their stacked bases instead of `main`, and one extra PR (#16) was needed. I'd avoid stacking next time.
+- Accepting the WCAG 2.5.8 "Equivalent" exception for overlapping map markers instead of clustering: honest and documented, but a real fix is better.
 
 ## 4. What was left out
 
-Standard search, filters and sort (T4); accessibility audit pass (T9: aria snapshots, tab-order test, WCAG table, whole-page axe); Fly deploy (T10); AI search (T5-T7); PostHog (T8); near-me; transitions. The reason is the clock: about 55 minutes went to waiting at the first human gate, and the human chose the strictest cut line at the second.
+AI search (T5-T7), PostHog analytics (T8), the RAG service deployment, distance labels in the list, and transitions. Within the 2-hour box, T4, T9 and T10 were also cut (about 55 minutes went to waiting at the first human gate); I chose to build them afterwards, and the README's "Time spent" says so.
 
 ## 5. The AI-usage story
 
-Claude Code orchestrated; Opus 5.5 handled orchestration, architecture and review; Sonnet 5.5 handled PRD, tickets, implementation and this documentation. Agents worked in separate worktrees under a documented process. The human approved at gates and merges. Real mistakes found: a vacuous e2e tile stub that passed CI, a dialog that closed on blank-area clicks, a misleading `aria-pressed`, an over-broad `.env` deny rule that blocked `.env.example`. See `docs/REVIEW_LOG.md` and `SELF_IMPROVEMENT.md`.
+Claude Code orchestrated; Opus 5.5 handled orchestration, architecture and review; Sonnet 5.5 handled PRD, tickets, implementation and this documentation. Agents worked in separate worktrees under a documented process. The human approved at gates and merges. Real mistakes found: a vacuous e2e tile stub that passed CI, a dialog that closed on blank-area clicks, a misleading `aria-pressed`, two vacuous search tests, a Caddy config that would have served HTML at `/healthz`, a double-request bug in "use my location", two cross-ticket test collisions caught only by integration runs, the orchestrator's own misreported "18 passed", and an over-broad `.env` deny rule that blocked `.env.example`. See `docs/REVIEW_LOG.md` and `SELF_IMPROVEMENT.md`.
 
 ## 6. What I would change before release
 
-- Build search and filters first; announce result counts in the live region.
-- Deploy to Fly with cold-start handling; add monitoring.
-- Do the VoiceOver and real-phone passes; add aria snapshots and a tab-order test.
+- Do the VoiceOver, real-phone, 200% zoom and text-spacing passes; test with screen-reader users.
+- Hosting: monitoring and alerts, a CSP, keep one machine warm (or accept cold starts), and rehearse the rollback.
+- Fix marker target size with bigger hit areas or clustering.
 - Replace the public OSM tiles; add real image hosting.
 - Add a test that counts marker Enter dispatches (exactly once).
 - Likely failures: tile server limits, the placeholder Cedar Hill coordinate, stale data, focus return if markers are re-rendered while the dialog is open.
