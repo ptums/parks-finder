@@ -29,6 +29,7 @@ module.exports = {
         '\\.css$': '<rootDir>/web/test/fileStub.cjs',
         '\\.(png|svg)$': '<rootDir>/web/test/fileStub.cjs',
         '^.+/env$': '<rootDir>/web/test/envStub.ts',
+        '^.+/imageFiles$': '<rootDir>/web/test/imageFilesStub.ts',
       },
     },
     {

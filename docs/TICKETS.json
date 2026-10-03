@@ -395,5 +395,38 @@
     "labels": ["core", "size:S"],
     "files_touched": ["web/src/search/**", "e2e/search.spec.ts"],
     "issue": 36
+  },
+  {
+    "id": "T13",
+    "title": "[T13] Use the local park photos via a derived image map",
+    "body": "The record image URLs never load. Add db/park-images.json (park id -> files in images/ + alt), overlay it in the loader, validate it, and bundle images/ with Vite.",
+    "acceptance": [
+      "Images load in vite dev, vite preview and the Docker build (naturalWidth > 0 for each mapped park).",
+      "validate:data checks every file exists, every id is a real park, and no duplicates.",
+      "A failing file still shows the labelled placeholder; tests for it use an aborted route.",
+      "Alt text describes each photo and names the park.",
+      "README Dataset changes and Known issues, and DATA_PROFILE, updated."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "S",
+    "labels": ["core", "size:S"],
+    "files_touched": [
+      "db/park-images.json",
+      "images/**",
+      "shared/parks.ts",
+      "shared/imageMap.ts",
+      "shared/imageMap.test.ts",
+      "scripts/validate-data.ts",
+      "web/src/data/**",
+      "web/src/components/ParkDetails/**",
+      "web/test/imageFilesStub.ts",
+      "jest.config.cjs",
+      "e2e/**",
+      "README.md",
+      "docs/DATA_PROFILE.md",
+      "docs/TICKETS.json"
+    ],
+    "issue": 44
   }
 ]

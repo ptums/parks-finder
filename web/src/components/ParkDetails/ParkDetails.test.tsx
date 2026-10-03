@@ -15,7 +15,7 @@ const full: Park = {
   coords: { lat: 1, lng: 2 },
   amenities: ['trails', 'wifi'],
   hours: 'Dawn to 1am; closed Mondays (see sign)',
-  images: ['https://example.invalid/a.jpg'],
+  images: [{ src: 'https://example.invalid/a.jpg' }],
   acreage: 526,
   rating: 4.7,
 };
@@ -23,7 +23,7 @@ const twoPhotos: Park = {
   id: 'two',
   name: 'Two Photo Park',
   amenities: [],
-  images: ['https://example.invalid/1.jpg', 'https://example.invalid/2.jpg'],
+  images: [{ src: 'https://example.invalid/1.jpg' }, { src: 'https://example.invalid/2.jpg' }],
 };
 const sparse: Park = { id: 'sparse', name: 'Sparse Park', amenities: [], images: [] };
 
@@ -181,6 +181,17 @@ describe('ParkDetails', () => {
     await open(full);
     expect(screen.getAllByRole('img')).toHaveLength(1);
     expect(screen.queryByText('Photos not listed')).toBeNull();
+  });
+
+  it('uses the alt text from the image map when a photo has one', async () => {
+    const mapped: Park = {
+      ...full,
+      images: [{ src: '/images/a.jpg', alt: 'Full Park: a lawn beside a path' }],
+    };
+    setup(mapped);
+    await open(mapped);
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'Full Park: a lawn beside a path');
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 
   it('renders every image in order with numbered alt text', async () => {
