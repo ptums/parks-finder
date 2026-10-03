@@ -64,7 +64,7 @@ Built and checked as described in "How I checked the result":
 
 - **Inside the box I cut** T4 (search), T9 (accessibility audit) and T10 (deploy). All three were built afterwards.
 - Animated transitions beyond the Recenter control; distance labels in the list when sorted by distance.
-- **The VoiceOver pass is not done** (human to-do; script in `docs/VERIFICATION.md`). Also not done: a real phone, 200% zoom, text spacing, forced-colors mode.
+- **VoiceOver:** I did a VoiceOver pass as part of my final QA (about 15 minutes, following the script in `docs/VERIFICATION.md`). Not done: a real phone, 200% zoom, text spacing, forced-colors mode.
 - Streaming answers (deliberate: nothing is read token by token), conversation history, a CSP, monitoring and alerts, a custom domain, image hosting.
 - Partial-word search ("play" no longer matches "playground"), a consequence of whole-word matching.
 
@@ -100,7 +100,7 @@ None. `db/parks.sample.json` is used verbatim and read directly (no copy, no der
 
 ## Known issues
 
-- **VoiceOver pass not done**; real phone, 200% zoom, text spacing and forced-colors not checked.
+- Real phone, 200% zoom, text spacing and forced-colors not checked. The VoiceOver pass was a single 15-minute run by me, not testing with screen-reader users.
 - Map markers (25x41 px) and zoom buttons are under the 44 px target rule. Three markers overlap neighbours at the default zoom, so axe's 2.5.8 check fails for them; I rely on the "Equivalent" exception (each list button does the same, full size). The axe test filters only that rule, only for markers.
 - Markers are tab stops in data order, not geographic order. "Skip map" and the list mitigate this.
 - Enter on a marker is meant to fire once; no test counts dispatches (human check).
@@ -145,7 +145,7 @@ Built to WCAG 2.2 AA and tested as described. This is not a certification, and a
 
 Tested: jest-axe on component states; whole-page axe (`@axe-core/playwright`, WCAG 2.0 to 2.2 A and AA tags) in several states on desktop and phone; tab-order tests (forward, Shift+Tab, skip links, no trap); aria snapshots and a heading-outline check; Enter, Space and Esc with focus return; 320px reflow; reduced motion; AI states (loading, answer, abstained, error placed under the input with `aria-describedby`); live-region hold. The per-criterion table is in `docs/VERIFICATION.md`.
 
-Known exception: marker target size. Not done: **VoiceOver pass (required; still to do)**, 200% zoom, text spacing.
+Known exception: marker target size. VoiceOver: one pass by me during final QA (about 15 minutes). Not done: 200% zoom, text spacing, testing with screen-reader users.
 
 To test with a screen reader: Safari on macOS skips links and buttons on Tab unless "Press Tab to highlight each item" is on; otherwise use Option+Tab. VoiceOver navigation keys work either way. The script, including the AI steps, is in `docs/VERIFICATION.md`.
 
@@ -189,20 +189,27 @@ Events (all through `web/src/analytics.ts`): `park_selected`, `details_closed`, 
 
 ## Time spent
 
-| Item                                                                                                                              | Minutes                        |
-| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Preparation before the clock (six root docs, accounts, repo setup)                                                                | ____ (human to fill in)        |
-| Inside the 2-hour box (11:58 CDT start; includes about 55 min waiting at the first review gate)                                   | 120 box; wrap-up began at T+93 |
-| After the box: T4 search (T+114 to T+122)                                                                                         | about 8                        |
-| After the box: T9 audit, T10 deploy, near-me (T+132 to about T+170)                                                               | about 40                       |
-| After the box: AI search, analytics, RAG deploy, Ant Design, live fixes, eval calibration, bug round (evening of Oct 2 and Oct 3) | ____ (human to fill in)        |
-| Total, start to finish                                                                                                            | ____ (human to fill in)        |
+Two different clocks: **wall clock** (elapsed time, which includes waiting and agents working) and **my hands-on time** (what I actually spent reading, deciding, reviewing and testing).
 
-At T+120 the app had the map, list and details (T1 to T3) plus docs. The 2-hour box was exceeded by my choice, many times over. Timeline: `docs/TIMEBOX.md`.
+| Item                                                                                              | Wall clock                                 | My hands-on time                                |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| Preparation before the clock (six root docs, accounts, repo setup)                                | n/a                                        | 1 hour 10 minutes                               |
+| Build window: 11:58 CDT start, wrap-up began at T+93 (13:31 CDT); I reviewed changes periodically | about 93 minutes                           | about 20 minutes                                |
+| Of the build window: waiting at the first review gate (~55 min, counted against the clock)        | about 55 minutes                           | 10 minutes reviewing (included in the 20 above) |
+| Human review, merge and final checks after wrap-up                                                | n/a                                        | 10 minutes                                      |
+| After the box: T4 search, filters, sort (I chose to continue at T+114)                            | about 8 minutes (T+114 to T+122)           | 5 minutes                                       |
+| After the box: T9 audit, T10 deploy, use my location, merges (T+132 onward)                       | about 40 minutes (includes my merge waits) | about 5 minutes                                 |
+| Final round of QA and the VoiceOver pass                                                          | n/a                                        | 15 minutes                                      |
+| **Total hands-on, excluding preparation**                                                         |                                            | **about 55 minutes**                            |
+| **Total hands-on, including preparation**                                                         |                                            | **about 2 hours 5 minutes**                     |
+
+The later additions (AI search, analytics, Ant Design, the live fixes and the bug round, Oct 2 evening to Oct 3) were done by agents with my decisions and merges at each step. They are not itemised separately above: my review and merge time for them is in the "after wrap-up" and QA rows, and their wall-clock time is in `docs/TIMEBOX.md` and the transcripts.
+
+Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than two hours of working time went into building. **The 2-hour box was exceeded**, by my choice, to build T4, T9, T10, use-my-location and everything after. At the 2-hour mark the submission had the map, list and details only.
 
 ## Most important next steps before public use
 
-1. VoiceOver pass, real phone, 200% zoom, text spacing, forced-colors; test with screen-reader users.
+1. Test with screen-reader users; real phone, 200% zoom, text spacing, forced-colors.
 2. Fix marker target size (bigger hit areas or clustering).
 3. AI spend and abuse: keep the key server-side, a shared (not per-machine, in-memory) daily cap, billing alerts, an eval set bigger than 23 queries, and a review of abstention misses.
 4. Hosting: monitoring and uptime alerts, a CSP (antd needs a style allowance), cold-start behaviour with more than one machine, a rehearsed rollback (`fly releases`, `fly deploy --image <previous>`).
