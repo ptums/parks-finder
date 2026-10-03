@@ -17,7 +17,8 @@ FROM node:22-slim
 WORKDIR /app
 ENV HUSKY=0 NODE_ENV=production PORT=8080 MODEL_CACHE_DIR=/app/model-cache
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# Dev dependencies (husky) are not installed here, so drop the "prepare" script that runs husky.
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 COPY --from=build /app/server/dist server/dist
 COPY --from=build /app/db db
 COPY --from=build --chown=node:node /app/model-cache model-cache
