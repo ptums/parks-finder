@@ -1,7 +1,7 @@
 import { AskResponseSchema, ErrorResponseSchema } from '../../shared/api';
 import { buildApp, type AppDeps } from '../src/app';
 import { loadConfig } from '../src/config';
-import { LlmTimeoutError, type LlmClient, type LlmRequest } from '../src/llm/types';
+import { LlmError, LlmTimeoutError, type LlmClient, type LlmRequest } from '../src/llm/types';
 import { createRetriever } from '../src/rag/retrieve';
 import { ABSTAIN_ANSWER } from '../src/rag/verifyCitations';
 import { testChunks } from './fixtures';
@@ -217,5 +217,24 @@ describe('POST /v1/ask', () => {
     const log = lines.join('\n');
     expect(log).toContain('"errorName":"Error"');
     expect(log).not.toContain(KEY);
+  });
+
+  it('logs the provider status and type (no message) when the model call is rejected', async () => {
+    const lines: string[] = [];
+    const { llm } = fakeLlm(() => {
+      throw new LlmError({ status: 400, providerType: 'invalid_request_error' });
+    });
+    const res = await ask(app({ llm, logStream: { write: (line) => lines.push(line) } }), {
+      query: 'duck pond',
+    });
+    expect(res.statusCode).toBe(503); // the client response is unchanged
+    const entry = lines.map((l) => JSON.parse(l)).find((l) => l.msg === 'llm failed');
+    expect(entry).toMatchObject({
+      errorName: 'LlmError',
+      status: 400,
+      providerType: 'invalid_request_error',
+    });
+    expect(lines.join('\n')).not.toContain('credit');
+    expect(lines.join('\n')).not.toContain('duck pond');
   });
 });

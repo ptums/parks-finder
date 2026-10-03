@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { loadConfig } from '../src/config';
 import { createAnthropicLlm } from '../src/llm/anthropic';
+import { failureLabel, shouldStopEarly } from '../src/llm/evalFailures';
 import { loadEmbedder } from '../src/rag/embedder';
 import { buildAskRequest, MAX_CHUNKS, TIMEOUT_MS } from '../src/rag/generate';
 import { loadChunks } from '../src/rag/index';
@@ -58,6 +59,9 @@ let asked = 0;
 let citationFailures = 0;
 let abstainRight = 0;
 let unsupportedTotal = 0;
+let errored = 0;
+let stoppedReason = '';
+const failureLabels: string[] = [];
 const spotCheck: string[] = [];
 
 for (const q of queries) {
@@ -66,12 +70,24 @@ for (const q of queries) {
   let result: VerifiedAnswer = { answer: '', citations: [], abstained: true, reason: 'retrieval' };
   let tokens = '';
   if (!retrieval.abstained && top.length > 0) {
-    const reply = await llm.create(buildAskRequest(q.query, top, config.anthropicModel), {
-      timeoutMs: TIMEOUT_MS,
-    });
-    result = verifyAnswer(reply.text, top);
-    tokens = ` tokens ${reply.inputTokens}/${reply.outputTokens}`;
-    asked += 1;
+    try {
+      const reply = await llm.create(buildAskRequest(q.query, top, config.anthropicModel), {
+        timeoutMs: TIMEOUT_MS,
+      });
+      result = verifyAnswer(reply.text, top);
+      tokens = ` tokens ${reply.inputTokens}/${reply.outputTokens}`;
+      asked += 1;
+    } catch (error) {
+      const label = failureLabel(error);
+      failureLabels.push(label);
+      errored += 1;
+      spotCheck.push(`[${q.id}] (${q.type}) ERROR ${label}\n  Q: ${q.query}\n`);
+      if (shouldStopEarly(failureLabels, asked)) {
+        stoppedReason = `Stopped: every call failed with ${label}. Check the account's credit balance or the key.`;
+        break;
+      }
+      continue;
+    }
   }
   if (result.reason === 'citation_failed') citationFailures += 1;
   if (result.reason === 'unsupported_fact') unsupportedTotal += 1;
@@ -90,14 +106,20 @@ for (const q of queries) {
 
 console.log(`Model: ${config.anthropicModel}\n`);
 console.log(spotCheck.join('\n'));
+if (stoppedReason) {
+  console.log(stoppedReason);
+  process.exit(1);
+}
 const pct = (n: number, d: number) => (d === 0 ? 'n/a' : `${((100 * n) / d).toFixed(0)}%`);
 console.log('Summary');
+const scored = queries.length - errored;
 const citedOk = asked - citationFailures;
 console.log(
   `  citation validity (answers whose citations all verified): ${citedOk}/${asked} (${pct(citedOk, asked)})`,
 );
 console.log(
-  `  abstention accuracy: ${abstainRight}/${queries.length} (${pct(abstainRight, queries.length)})`,
+  `  abstention accuracy: ${abstainRight}/${scored} (${pct(abstainRight, scored)}), not counting errors`,
 );
+console.log(`  queries that errored (model call failed): ${errored}`);
 console.log(`  answers rejected for unsupported facts: ${unsupportedTotal}`);
 console.log('  Read every answer above: the fact check only covers names and numbers.');

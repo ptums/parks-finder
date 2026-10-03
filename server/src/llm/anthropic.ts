@@ -1,5 +1,5 @@
-import Anthropic, { APIConnectionTimeoutError } from '@anthropic-ai/sdk';
-import { LlmTimeoutError, type LlmClient } from './types';
+import Anthropic, { APIConnectionTimeoutError, APIError } from '@anthropic-ai/sdk';
+import { LlmError, LlmTimeoutError, type LlmClient } from './types';
 
 /**
  * Thin adapter over @anthropic-ai/sdk (excluded from coverage, like embedder.ts).
@@ -23,6 +23,13 @@ export function createAnthropicLlm(apiKey: string): LlmClient {
         };
       } catch (error) {
         if (error instanceof APIConnectionTimeoutError) throw new LlmTimeoutError();
+        if (error instanceof APIError) {
+          throw new LlmError({
+            status: error.status,
+            providerType: error.type ?? undefined,
+            requestId: error.requestID ?? undefined,
+          });
+        }
         throw error;
       }
     },

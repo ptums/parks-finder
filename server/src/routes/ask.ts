@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { AskRequestSchema, type AskResponse } from '../../../shared/api';
 import type { DailyCap } from '../dailyCap';
 import { sendError } from '../errors';
-import { LlmTimeoutError, type LlmClient, type LlmReply } from '../llm/types';
+import { LlmTimeoutError, llmErrorFields, type LlmClient, type LlmReply } from '../llm/types';
 import { buildAskRequest, MAX_CHUNKS, TIMEOUT_MS } from '../rag/generate';
 import type { Retriever } from '../rag/retrieve';
 import { ABSTAIN_ANSWER, verifyAnswer, type VerifiedAnswer } from '../rag/verifyCitations';
@@ -52,8 +52,8 @@ export function registerAskRoute(app: FastifyInstance, deps: AskDeps) {
         });
       } catch (error) {
         const timedOut = error instanceof LlmTimeoutError;
-        // Only the error's class name: messages from upstream can echo request details.
-        request.log.warn({ route: '/v1/ask', errorName: (error as Error).name }, 'llm failed');
+        // Status and provider type only (no message: upstream messages can echo request details).
+        request.log.warn({ route: '/v1/ask', ...llmErrorFields(error) }, 'llm failed');
         return timedOut
           ? sendError(reply, 504, 'timeout', 'The AI answer took too long. Try again.')
           : sendError(reply, 503, 'ai_unavailable', 'AI answers are not available right now.');
