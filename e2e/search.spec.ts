@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { expect, test } from './fixtures';
 
 // The directory starts collapsed on phones, so open it when needed.
@@ -6,6 +7,12 @@ async function openDirectory(page: Page) {
   const toggle = page.getByRole('button', { name: 'Show park list' });
   if (await toggle.isVisible()) await toggle.click();
 }
+
+// Read the data file directly: Playwright's Node loader cannot import JSON without attributes.
+const PARKS = JSON.parse(readFileSync('db/parks.sample.json', 'utf8')) as {
+  id: string;
+  amenities: string[];
+}[];
 
 test.describe('search, filters and sort', () => {
   test('keyboard-only: query, amenity with Space, sort, Reset', async ({ page }) => {
@@ -48,6 +55,17 @@ test.describe('search, filters and sort', () => {
     await expect(sort).toHaveValue('name');
     await expect(reset).toBeFocused();
     await expect(status).toHaveText('Search and filters cleared. 12 parks shown.');
+  });
+
+  test('amenity keyword "Lake" lists only parks with the Lake amenity', async ({ page }) => {
+    await page.goto('/');
+    await openDirectory(page);
+    await page.getByLabel('Search parks').fill('Lake');
+    const lakeParks = PARKS.filter((p) => p.amenities.includes('lake'));
+    await expect(page.locator('.park-list-item')).toHaveCount(lakeParks.length);
+    for (const p of lakeParks) {
+      await expect(page.locator(`#park-list-item-${p.id}`)).toBeVisible();
+    }
   });
 
   test('no results shows a message', async ({ page }) => {
