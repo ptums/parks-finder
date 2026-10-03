@@ -67,7 +67,6 @@ function ParkDialog({ park }: { park: Park }) {
     dispatch({ type: 'closeDetails' });
   };
   const stats = sizeAndRating(park);
-  const firstImage = park.images[0];
 
   return (
     <dialog
@@ -89,8 +88,14 @@ function ParkDialog({ park }: { park: Park }) {
             Close
           </Button>
         </div>
-        {firstImage ? (
-          <ParkImage key={park.id} src={firstImage} name={park.name} />
+        {park.images.length > 0 ? (
+          <ul className="park-gallery" aria-label="Photos">
+            {park.images.map((src, index) => (
+              <li key={`${park.id}-${index}`}>
+                <ParkImage src={src} name={park.name} index={index} total={park.images.length} />
+              </li>
+            ))}
+          </ul>
         ) : (
           <p>Photos not listed</p>
         )}

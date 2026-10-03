@@ -19,6 +19,12 @@ const full: Park = {
   acreage: 526,
   rating: 4.7,
 };
+const twoPhotos: Park = {
+  id: 'two',
+  name: 'Two Photo Park',
+  amenities: [],
+  images: ['https://example.invalid/1.jpg', 'https://example.invalid/2.jpg'],
+};
 const sparse: Park = { id: 'sparse', name: 'Sparse Park', amenities: [], images: [] };
 
 function Opener({ id, returnFocusId }: { id: string; returnFocusId: string }) {
@@ -167,6 +173,41 @@ describe('ParkDetails', () => {
     first.unmount();
     setup(sparse);
     await open(sparse);
+    expect(await axe(document.body)).toHaveNoViolations();
+  });
+
+  it('shows one labeled image for one photo and a "Photos not listed" note for none', async () => {
+    setup(full);
+    await open(full);
+    expect(screen.getAllByRole('img')).toHaveLength(1);
+    expect(screen.queryByText('Photos not listed')).toBeNull();
+  });
+
+  it('renders every image in order with numbered alt text', async () => {
+    setup(twoPhotos);
+    await open(twoPhotos);
+    const images = screen.getAllByRole('img');
+    expect(images.map((img) => img.getAttribute('alt'))).toEqual([
+      'Photo 1 of 2: Two Photo Park',
+      'Photo 2 of 2: Two Photo Park',
+    ]);
+    expect(screen.getByRole('list', { name: 'Photos' }).children).toHaveLength(2);
+    expect(await axe(document.body)).toHaveNoViolations();
+  });
+
+  it('fails each image independently with its own placeholder', async () => {
+    setup(twoPhotos);
+    await open(twoPhotos);
+    fireEvent.error(screen.getByRole('img', { name: 'Photo 1 of 2: Two Photo Park' }));
+    expect(
+      screen.getByRole('img', { name: 'Photo 1 of 2 of Two Photo Park unavailable' }),
+    ).toHaveTextContent('Image unavailable');
+    expect(screen.getByRole('img', { name: 'Photo 2 of 2: Two Photo Park' })).toBeInTheDocument();
+    fireEvent.error(screen.getByRole('img', { name: 'Photo 2 of 2: Two Photo Park' }));
+    expect(
+      screen.getByRole('img', { name: 'Photo 2 of 2 of Two Photo Park unavailable' }),
+    ).toHaveTextContent('Image unavailable');
+    expect(screen.getAllByText('Image unavailable')).toHaveLength(2);
     expect(await axe(document.body)).toHaveNoViolations();
   });
 });
