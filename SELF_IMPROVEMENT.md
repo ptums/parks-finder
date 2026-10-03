@@ -66,3 +66,23 @@ Twice, two tickets that each passed alone failed together (a role+name locator m
 ## 2026-10-02: Deploy config needs execution, not just reading
 
 The Caddyfile looked right but had a directive-order bug that a passing health check would have hidden. Docker wasn't running locally, so the first real build was the CI deploy. Next time: start Docker (or a remote build-only run) before the deploy PR, and make the health endpoint return a body the check asserts on.
+
+## 2026-10-03: Parallel e2e runs shared fixed ports
+
+`playwright.config.ts` used `reuseExistingServer: !CI` on fixed ports 4173/4174. With agents running e2e in parallel worktrees, one run silently tested another worktree's build; the orchestrator's re-run of #33 showed 15 failures because both ports were owned by the #34 worktree (REVIEW_LOG #68). Mitigation used: isolated re-runs with `CI=1`. Next time: derive ports per worktree, or never reuse servers, and print which build a run tested.
+
+## 2026-10-03: A secret typed into a `!` command
+
+The human set the Fly secret with a `!` command that contained the API key, so the key is in the session transcript, which is submitted unredacted and must not be edited. The key was revoked immediately and a new one set with `fly secrets import` (value not in any command). Next time: the orchestrator gives the exact no-value command (`fly secrets import` reading from stdin or a file outside the repo) before the human needs to set any secret, and PROCESS.md states "never type a key into a chat command".
+
+## 2026-10-03: Verify deploy configs by execution (again)
+
+The first RAG deploy failed because `npm ci --omit=dev` ran the `prepare` script (husky, a dev dependency), so it exited 127 (REVIEW_LOG #55, fixed in PR #27). Docker was not running locally, so the first real build was the deploy, the same lesson as the Caddy `/healthz` bug. Next time: build both images locally or in a build-only remote run before the deploy PR, and run the container's health check.
+
+## 2026-10-03: Agent-reported numbers were wrong until recomputed
+
+A developer reported primary-colour contrast as 6.29:1 and hover as 4.92:1 and wrote an unchecked "pressed 8.7:1" in `theme.ts`; the orchestrator computed 8.08, 6.21 and 10.48 (REVIEW_LOG #56). Earlier, the orchestrator's own "18 passed" came from the last output line and hid 2 failures (#19). Next time: compute ratios with a script that is committed or shown, and quote the full Playwright summary (passed and failed) and the Jest totals from the output, never from memory or an agent's report.
+
+## 2026-10-03: Stacked PRs merged into the wrong base
+
+Stacked PRs (#12 to #15) were merged into their stacked bases, not `main`, so the foundation and feature work reached `main` only through the combining PR #16. This was first noted on 2026-10-02 above; it cost one extra PR and a confusing history. Next time: open every PR against `main`, or retarget each one after its parent merges, and have the orchestrator check the base branch before telling the human to merge.

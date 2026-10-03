@@ -22,6 +22,8 @@ Proposed by the pm and architect (`docs/PRD.md`, `docs/ARCHITECTURE.md` section 
 12. The transcripts folder is `transcripts/` (renamed by the human at G0).
 13. **2026-10-02: Ant Design added at the human's request (styling only).** `antd@^6` joins the fixed stack (T12, issue #28). It may only be used through components that render native semantic elements (Button, Tag, Typography, layout helpers). The details `<dialog>`, native `<select>`, Leaflet map, skip links and the single live region stay as they were. Primary colour must be at least 4.5:1 both ways; `motion` is off under reduced motion. No behaviour changes. This is the approved exception to "feature tickets do not edit `package.json`".
 
+14. **2026-10-03: scope as built.** AI search (retrieval, `/v1/ask`, AI UI), PostHog analytics and the Fly deploys of both apps were built after the 2-hour box, at the human's request, within the stack above. Text search matches whole words with plural tolerance (a refinement of item 7, from the bug round, issue #36). Both are documented in the README.
+
 ## 1. Goal
 
 A small, polished, accessible web app that helps residents find parks: see them on a map, browse a list, and open details, with optional AI-powered search. Built through a multi-agent SDLC pipeline in about 2 hours.
