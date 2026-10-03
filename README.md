@@ -117,7 +117,7 @@ None. `db/parks.sample.json` is used verbatim and read directly (no copy, no der
 
 Full table with evidence and status: `docs/VERIFICATION.md` (each row typed automated, agent or human, dated). In short:
 
-- **`main` after the bug-round PRs (#37-#40), run by me for this docs PR:** `npm run check` exit 0, 280 Jest tests in 30 suites, coverage 96.92% statements, 95.21% branches, 97.76% functions, 99.15% lines. The orchestrator separately reported 305 Jest tests and Playwright 98 passed, 0 failed (desktop, phone, ai-desktop, ai-phone) on its integration branch; I could not reconcile 305 with my 280 and I did not run Playwright.
+- **Final `main` (after #37-#40):** `npm run check` exit 0, **305 Jest tests**, coverage 96.93% statements, 95.25% branches, 97.77% functions, 99.15% lines; `CI=1 npm run e2e` **98 passed, 0 failed** (desktop, phone, ai-desktop, ai-phone). Run by the orchestrator on the final code. (An earlier docs draft quoted 280 because its branch predated #37-#40.)
 - **Earlier stages,** each re-run independently by the orchestrator: foundation (46 tests), map (61), list and details (62), search (83), near-me (114), a11y audit (e2e 76 then 80).
 - **Live site:** `/healthz` ok; `/v1/capabilities` returns `{"ai":true}`; `/v1/search` in hybrid mode; an off-topic query abstains; CORS allows only the web origin and exposes `Retry-After`; 413 above 2 KB; AI controls appear about 160 ms after load (warm). One live `/v1/ask` ("Which park has a dog run with water fountains?") returned Highland Dog Park with a word-for-word citation in 1.3 s (484 + 126 tokens). The full e2e suite was run against the live URL several times (80 passed at the near-me stage); later runs exposed the live-region bug fixed in PR #31.
 - **Bug round (fixed in PRs #37-#40):** marker images in `vite dev` and the production build, Recenter with Enter and Space, all gallery images, all 19 amenity keywords return exactly the matching parks, 320px reflow.
@@ -152,8 +152,8 @@ To test with a screen reader: Safari on macOS skips links and buttons on Tab unl
 ## Testing
 
 - **Hooks:** pre-commit runs lint-staged then typecheck; pre-push runs Jest. **CI** mirrors them (format, lint, typecheck, Jest with coverage, build, `eval:retrieval`, Playwright). Coverage thresholds are enforced.
-- **Jest + React Testing Library + jest-axe:** 280 tests in my last run (the orchestrator reported 305 on an integration branch; not reconciled). The Anthropic client is mocked; CI never calls the real API.
-- **Playwright:** 98 passed, 0 failed across four projects (orchestrator-reported; I did not run it). `ai-desktop` and `ai-phone` run against a build with an AI service faked in the test.
+- **Jest + React Testing Library + jest-axe:** 305 tests on the final `main`. The Anthropic client is mocked; CI never calls the real API.
+- **Playwright:** 98 passed, 0 failed across four projects on the final `main` (run with `CI=1` so it never reuses another worktree's server). `ai-desktop` and `ai-phone` run against a build with an AI service faked in the test.
 - **Deploys:** on merge to `main`, GitHub Actions deploys each app to Fly (path-filtered) and curls `/healthz`.
 
 ## AI search design + eval tables
