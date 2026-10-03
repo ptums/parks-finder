@@ -22,6 +22,7 @@ export function createTheme(reducedMotion: boolean): ThemeConfig {
       colorPrimaryActive: PRIMARY_ACTIVE,
       colorLink: PRIMARY,
       colorTextBase: '#1a1a1a',
+      colorBorder: '#767676', // 4.54:1 on white, so button edges pass the 3:1 non-text rule
       borderRadius: 8,
       fontSize: 16,
       controlHeight: 44, // keeps antd buttons at the 44px target size
