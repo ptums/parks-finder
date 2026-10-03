@@ -41,6 +41,18 @@ test.describe('list and details', () => {
     ).toBeVisible();
   });
 
+  test('every photo of a park gets its own placeholder', async ({ page }) => {
+    await page.goto('/');
+    await openDirectory(page);
+    await page.locator('#park-list-item-prospect-park').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Photos' }).getByRole('listitem')).toHaveCount(2);
+    await expect(page.getByText('Image unavailable')).toHaveCount(2);
+    await expect(
+      page.getByRole('img', { name: 'Photo 2 of 2 of Prospect Park unavailable' }),
+    ).toBeVisible();
+  });
+
   test('there is no keyboard trap inside details', async ({ page }) => {
     await page.goto('/');
     await openDirectory(page);

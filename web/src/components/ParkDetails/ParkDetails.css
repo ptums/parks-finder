@@ -52,9 +52,21 @@
   list-style: none;
 }
 
+.park-details .park-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 480px) {
+  .park-details .park-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .park-image-box {
   aspect-ratio: 16 / 9;
-  margin: 1rem 0;
   overflow: hidden;
   background: #eee;
 }
