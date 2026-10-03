@@ -2,194 +2,214 @@
 
 - Project board: https://github.com/users/ptums/projects/1
 - GitHub Actions: https://github.com/ptums/parks-finder/actions
-- Live preview: https://peter-parks-web.fly.dev (web app only; the machine auto-stops when idle, so the first load after a pause can take a few seconds)
+- Live web app: https://peter-parks-web.fly.dev (AI search is on here; the machine auto-stops when idle, so open it a minute before a demo)
+- Live AI service: https://peter-parks-rag.fly.dev (`/healthz`, `/v1/capabilities`; the web app calls it, you do not need to)
 
 The repo and board are private, so these links may not open for you. This README is written to stand on its own.
 
-A small web app for browsing 12 local parks: a map with markers, a directory list, and a details view. Built in a 2-hour time box with Claude Code agents, under human direction and review. The scope is modest on purpose: the core (map, list, details), search/filters/sort, "use my location" and an accessibility audit are built and deployed; **AI search and analytics were cut** (details below). Parts were finished after the 2-hour box at my request; "Time spent" says exactly which.
+A web app for browsing 12 local parks: a map with markers, a directory list, details, search and filters, and optional AI search that answers from the park data with checked citations. Built with Claude Code agents under human direction and review.
+
+**Be clear about the time box.** The brief was a 2-hour build. At T+120 the app had only the map, list and details (T1 to T3) plus docs. **Most of the product was built after the box, at my request:** search/filters/sort, an accessibility audit, a web deploy, "use my location", then (that evening and the next day) AI search, analytics, the AI service deploy, Ant Design, live fixes, eval calibration and a bug round. "Time spent" has the timeline. Nothing after T+120 was part of the timed deliverable.
 
 ## How to run
 
-Requires Node >= 22.12 and network access for `npm ci` and for the map tiles.
+Requires Node >= 22.12 and network access for `npm ci` and the map tiles.
 
-From a clean unzip:
+**1. Standard mode, no key (the default).** From a clean unzip:
 
 ```bash
 npm ci
 npm run dev:web        # http://localhost:5173
 ```
 
-No API key and no `.env.local` file are needed. Everything that was built works without them. Map tiles come from OpenStreetMap, so they need internet.
+Map, list, details, search, filters, sort and "use my location" all work with no key and no `.env.local`. No AI controls are in the page.
+
+**2. With your own Anthropic key (AI search locally).** Copy `.env.example` to `.env.local`, put your key in `ANTHROPIC_API_KEY=`, then:
+
+```bash
+npm run dev            # web on :5173 and the AI service on :8080
+```
+
+The web app asks `GET /v1/capabilities`; only when the service answers `{"ai":true}` do the AI controls appear. The first AI run downloads a small embedding model (needs internet). If it cannot load, retrieval falls back to keyword-only (`mode: lexical`) instead of crashing. Analytics stay off unless you set `VITE_POSTHOG_KEY`.
+
+**3. No setup: the live site.** https://peter-parks-web.fly.dev has AI search enabled (Claude Haiku 4.5, rate-limited and capped to protect spend). If the daily cap is hit or the service is cold, the standard search still works and AI shows a status message.
+
+When AI is available there are three modes: **Filters** (standard search and filters only), **AI** (the AI does all the searching; the standard filters are removed from the page), and **Both** (AI results narrowed by the standard filters; the default).
 
 Other commands:
 
 ```bash
-npm run check          # format check, lint, typecheck, Jest with coverage, build
+npm run check                     # format check, lint, typecheck, Jest with coverage, build
 npx playwright install chromium   # once, then:
-npm run e2e            # Playwright (desktop and phone projects)
-npm run dev:server     # optional: the minimal server (see below)
-npm run validate:data  # validates db/parks.sample.json
+npm run e2e                       # Playwright (desktop, phone, ai-desktop, ai-phone)
+npm run eval:retrieval            # offline retrieval eval (no key needed)
+npm run eval:ask                  # live ask eval (needs a key and credit; manual)
+npm run validate:data             # validates db/parks.sample.json
 ```
-
-`npm run dev` currently starts the web app only. The server is started separately with `npm run dev:server`.
-
-**AI search is not built in this submission.** The server exists as a skeleton (`/healthz`, and `/v1/capabilities` which returns `{"ai":false}` when there is no key). The web app renders no AI controls at all, with or without a key. `.env.local` (copy of `.env.example`) is optional and only affects code paths that are not used yet. The live deployment does not include AI search either.
 
 ## What works
 
-Built and checked (see "How I checked the result" for the evidence and its limits):
+Built and checked as described in "How I checked the result":
 
-- Map of all parks with OpenStreetMap tiles (attribution kept). Markers are keyboard operable: Tab to focus, Enter or Space to open details. The selected marker has an outline cue that does not rely on color alone.
-- Park directory: a list of buttons, with a collapse toggle for small screens. List and map open the same details.
-- Details in a native modal `<dialog>`: focus moves to the park heading on open; Esc, the Close button, or a click on the backdrop closes it; focus returns to whatever opened it, including a map marker.
-- Missing data: only fields that exist are shown; missing ones show "Not listed" or are omitted. Hours are shown verbatim, never parsed.
-- Images: all sample image URLs fail by design; a labeled placeholder is shown instead of a broken icon.
-- Search, filters and sort (T4, built after the 2-hour box): one text search over name, description, address and amenity labels (every word must match); an amenity checkbox filter (a park must have **all** selected amenities); sort by name, rating or size, with parks missing the value listed last; a Reset button. The result count is announced politely about half a second after you stop typing, and a visible "No parks match" message appears when nothing matches.
-- "Use my location": sorts parks by distance. The browser asks for location only when you press the button; if you refuse or it fails, a message says so and the list keeps its order. Coordinates stay in memory and are never stored or sent.
-- Skip links ("Skip to results", "Skip map"), landmarks, one `h1`, a polite live region.
-- Live on Fly.io: https://peter-parks-web.fly.dev (Caddy serving the static build; `/healthz`; security headers; HTTPS).
-- Server skeleton: `/healthz` and `/v1/capabilities`.
+- **Core (inside the box).** Map with all parks (OpenStreetMap tiles, attribution kept), keyboard-operable markers (Enter and Space), a directory list, and a native modal `<dialog>` for details. List and map open the same details; focus moves to the heading and returns to the trigger on close. Missing data shows "Not listed" or is omitted; hours are verbatim. Failed images show a labeled placeholder.
+- **Search, filters, sort (after the box).** One text search over name, description, address and amenity labels, matching **whole words** with simple plural tolerance ("trail" matches "trails"; "Wi-Fi" and "wifi" are equal). Amenity checkboxes (a park must have **all** selected). Sort by name, rating or size; parks missing the value go last. Reset. Counts are announced politely.
+- **Use my location.** Sorts by distance, only when you press the button. Coordinates stay in memory.
+- **AI search (after the box).** "Ask about the parks": the answer comes only from retrieved park text, with citations that open the park's details. Abstains ("I don't have that information in the park data.") when the evidence is weak. Capability-gated (see decisions).
+- **Analytics (after the box).** PostHog behind one wrapper, off without a key, cookieless. See "Analytics notes".
+- **Map Recenter button, ratings in the directory, full image gallery** (the bug round, fixed in PRs #37-#40; see below).
+- Skip links, landmarks, one `h1`, one polite live region.
+- Two Fly.io apps deployed from GitHub Actions on merge to `main`.
 
 ## What I left out
 
-- **Within the 2-hour box I cut** T4 (search/filters/sort), T9 (accessibility audit) and T10 (deploy). **All three were built afterwards** at my request (PRs #15, #19, #18, #17); see "Time spent". Not built from T4: the AI "best match" sort.
-- **The RAG service is not deployed.** The Fly app `peter-parks-rag` exists but has no release; it would only serve AI search, which was cut.
-- **T5-T7 AI search** (retrieval service, grounded answers, AI UI) and **T8 PostHog analytics.** Not started. The core ships with AI and analytics off, which is the intended fallback.
-- Animated transitions (cut first, as planned).
-- The list does not show the distance to each park when sorted by distance; only the order changes.
-
-Why: roughly half the 2-hour box was spent waiting at the first human review gate (see "Time spent"). At the second gate I chose the strictest cut line (core only), then extended the work after the box.
+- **Inside the box I cut** T4 (search), T9 (accessibility audit) and T10 (deploy). All three were built afterwards.
+- Animated transitions beyond the Recenter control; distance labels in the list when sorted by distance.
+- **The VoiceOver pass is not done** (human to-do; script in `docs/VERIFICATION.md`). Also not done: a real phone, 200% zoom, text spacing, forced-colors mode.
+- Streaming answers (deliberate: nothing is read token by token), conversation history, a CSP, monitoring and alerts, a custom domain, image hosting.
+- Partial-word search ("play" no longer matches "playground"), a consequence of whole-word matching.
 
 ## Important decisions
 
-- **One npm package, three folders** (`web/`, `server/`, `shared/`) and `db/` as a plain folder. The data file is read directly by a typed loader in `shared/`; there is no database and no copy of the data.
-- **Details as a native modal `<dialog>`** (`showModal`), giving focus trapping, Esc, and inert background for free. Focus return is handled explicitly because markers and list buttons both open it.
-- **Markers as real focusable elements** with explicit Enter and Space handling (Leaflet only handles Enter by default). "Skip map" bypasses the 12 marker tab stops; the list plus details is a full alternative to the map.
-- **Missing data is normalized at load**: null and empty strings become "missing", and the UI never invents a value.
-- **Env access in one module** (`web/src/env.ts`), stubbed in Jest because Jest cannot run `import.meta`.
-- **Hooks and CI as gates**: Husky pre-commit (lint-staged then typecheck) and pre-push (Jest); CI mirrors them.
-- **Ant Design for styling only (added at the human's request, T12).** One `ConfigProvider` theme (`web/src/theme.ts`): park green `#0b5d1e` (8.08:1 on white, and white on it the same; hover 6.21:1, pressed 10.48:1), 8px radius, 16px base font, 44px control height, and `motion: false` plus no click ripple under `prefers-reduced-motion`. Only `Button`, `Tag` and `Typography.Title` are used, because they render native `<button>`, `<span>` and `<h1>`. Kept native: the details `<dialog>`, the `<select>`, checkboxes and radios, the map, skip links and the live region. antd `Alert` is not used because it adds `role="alert"`, a second announcer. Trade-off: the web JS grew from 493.86 kB (153.33 kB gzip) to 767.31 kB (245.72 kB gzip).
-- Full list and trade-offs: `docs/ARCHITECTURE.md`.
+- **One npm package, three folders** (`web/`, `server/`, `shared/`) and `db/` as a plain folder read directly by a typed loader. No database, no copy of the data.
+- **Details as a native `<dialog>`** (focus trap, Esc, inert background for free); focus return handled explicitly. **Markers are real focusable elements** with Enter and Space; "Skip map" bypasses the marker tab stops and the list plus details is a full alternative.
+- **AI design.** The server chunks each park per field group, prefixed with the park name, and combines keyword (BM25-style) and meaning (local embeddings, cosine) rankings by reciprocal rank fusion. Below a score threshold it abstains **without calling the model**. Otherwise one Claude Haiku 4.5 call (max 400 tokens, no tools) sees only the retrieved chunks, labeled by `chunkId`, with the question treated as untrusted. The server then checks every citation (chunk was retrieved, quote is in it, at least 6 characters, more than the park name) and checks that every name and number in the answer appears in the cited text. Any failure means the whole answer is replaced by an abstention. The answer is one JSON response, not a stream.
+- **Capability gating.** The browser cannot see the key, so it asks `GET /v1/capabilities`. No key, no `VITE_RAG_URL`, or an unreachable service means no AI controls in the DOM (not hidden by CSS). The core UI never waits on the service. Key only in the server's environment; CORS limited to the web origin; per-IP rate limit (20 per minute); body limit (413 above 2 KB); daily cap (default 300 model calls per machine, kept in memory); structured logs without keys.
+- **PostHog privacy.** `persistence: "memory"` (no cookies or storage), `person_profiles: identified_only` and we never identify, Do Not Track respected, session recording off, autocapture only for clicks on buttons and links, every remote-config feature explicitly disabled, and `$ip` stripped before send. Events carry no coordinates and no query text. A disclosure line appears in the footer only when a key is set.
+- **Ant Design for styling only (added at my request).** One theme in `web/src/theme.ts`: green `#0b5d1e` (8.08:1 on white, hover 6.21:1, pressed 10.48:1; computed by the orchestrator after a developer reported wrong figures), 44px controls, motion off under reduced motion. Only `Button`, `Tag` and `Typography.Title` are used because they render native elements. The dialog, selects, checkboxes, radios, map, skip links and live region stay native. antd `Alert` is avoided (it adds `role="alert"`, a second announcer). Cost: main JS grew from 493.86 kB raw (153.33 kB gzip) to 767.49 kB (245.80 kB gzip).
+- **Live region hold.** The one polite live region keeps each message for 1.5 seconds before a newer one replaces it, because a late "AI search is available." was overwriting user-triggered messages (REVIEW_LOG #64; fixed in PR #31).
+- **Env access in one module** (`web/src/env.ts`); hooks and CI as gates. Full list: `docs/ARCHITECTURE.md`.
 
 ## Assumptions
 
-1. The municipality is "NYC-area (fictional mix)": every park lies at lat 40.58 to 40.85, lng -74.09 to -73.79; some are real (Prospect Park), most are fictional. The app makes no claims beyond the data.
-2. The data is shown verbatim: names, addresses (including partial ones), descriptions, and hours are not corrected, geocoded, completed, or reformatted.
-3. `rating` is assumed to be out of 5 (the brief does not state a scale; values range 3.9 to 4.9). It is displayed as a number, never as stars alone.
-4. `acreage` is assumed to be in acres.
-5. Image URLs are placeholders that will not load; the labeled "image unavailable" placeholder is the expected experience.
-6. There is no contact data, so no contacts are shown ("Contact information not listed").
-7. The coordinate for `cedar-hill-nature-preserve` (40.7128, -74.0060) looks like a default NYC point rather than a real preserve location. It is shown as given.
-8. The brief says search and filters are optional and does not say which; the plan was text search, a multi-select amenity filter, and sort by name, rating, or acreage. This was built after the time box (PR #15).
-9. "Complete ADA compliance" is interpreted as WCAG 2.2 Level AA with documented tests plus a human VoiceOver pass. No tool can certify ADA compliance and this README does not claim it.
-10. The interviewer evaluates from the zip and a 30-minute session. The core needs no keys.
-11. The brief calls the data file `assets/parks.sample.json`; here it lives at `db/parks.sample.json` and is read directly.
-12. Map tiles come from the public OpenStreetMap server (attribution kept). Fine for this exercise, not for heavy public traffic.
-13. The local environment file is `.env.local` at the repo root (not `.env`); a missing file never crashes either side.
-14. Analytics, if it were enabled, would be PostHog only, anonymous, cookieless, with no PII. (Not built.)
-15. Phone layout is judged by viewport emulation (Playwright) plus a planned human check; there was no physical device matrix.
+1. The municipality is "NYC-area (fictional mix)": every park lies at lat 40.58 to 40.85, lng -74.09 to -73.79; some are real (Prospect Park), most are fictional. The app makes no claims beyond the data, and the AI is told not to use outside knowledge.
+2. Data is shown verbatim: names, addresses, descriptions and hours are never corrected, geocoded or reformatted.
+3. `rating` is out of 5 (values 3.9 to 4.9); `acreage` is in acres.
+4. Image URLs are placeholders that will not load; the placeholder is the expected experience.
+5. There is no contact data, so none is shown.
+6. The Cedar Hill Nature Preserve coordinate (40.7128, -74.0060) looks like a default NYC point. Shown as given.
+7. The brief calls the data `assets/parks.sample.json`; here it is `db/parks.sample.json`, read directly.
+8. The brief says search and filters are optional and does not say which; I chose text search, amenity filter (AND) and sort.
+9. "Complete ADA compliance" is read as WCAG 2.2 AA with documented tests plus a human screen-reader pass. No tool can certify ADA compliance and this README does not claim it.
+10. The interviewer evaluates from the zip and a 30-minute session; the core needs no keys. The local env file is `.env.local`.
+11. Map tiles come from the public OpenStreetMap server (fine here, not for heavy traffic).
+12. Phone layout was judged by viewport emulation (Playwright), not a device matrix.
 
 ## Dataset changes
 
-None. `db/parks.sample.json` is used verbatim and read directly (no copy, no derived file). It is normalized in memory at load time (null or empty becomes "missing"). The file on disk is never edited.
+None. `db/parks.sample.json` is used verbatim and read directly (no copy, no derived file). It is normalized in memory at load (null or empty becomes "missing"). The AI index is built from the same file at build time and is a build artifact, not a data change.
 
 ## Known issues
 
-- Map markers (25x41 px) and Leaflet zoom buttons (26-30 px) are below the project's own 44 px target rule. Three markers (Cedar Hill, Highland Dog Park, Old Mill) overlap their neighbours at the default zoom, so axe's WCAG 2.5.8 target-size check fails for them. I rely on 2.5.8's "Equivalent" exception (each park's list button does the same thing and is full size). The axe test filters out only that rule, only for markers, with a comment. A real fix would be bigger hit areas or clustering.
-- The 12 markers are tab stops in data order, not geographic order. "Skip map" and the list mitigate this.
-- Enter on a marker is meant to fire exactly once (the code suppresses Leaflet's keypress-to-click); no test counts dispatches. Needs a human check.
-- The list button's accessible name joins several spans (for example name plus "Not shown on map"); whether a separator is read correctly is unverified with a real screen reader.
-- The image alt text "Photo of X" is redundant to some screen readers ("image, Photo of X"). Kept deliberately.
-- Cedar Hill Nature Preserve's coordinate looks like a placeholder (see Assumptions).
-- No VoiceOver pass has been done yet (human to-do, 15-step script in `docs/VERIFICATION.md`).
-- Tab-order expectations in `e2e/tab-order.spec.ts` are built from the DOM, so they catch traps and reversal problems but not a wrong DOM order. The aria snapshots match partially.
-- Search is plain substring matching: "park" also matches any park with the "Skate park" amenity, and a one-letter query matches almost everything.
-- The Playwright sort test uses `selectOption`; using arrow keys on the native sort `<select>` is a human check (Playwright can't drive the native popup).
-- The live site auto-stops when idle; the first request after a pause is slower (cold start).
-- `npm run dev` runs the web app only.
+- **VoiceOver pass not done**; real phone, 200% zoom, text spacing and forced-colors not checked.
+- Map markers (25x41 px) and zoom buttons are under the 44 px target rule. Three markers overlap neighbours at the default zoom, so axe's 2.5.8 check fails for them; I rely on the "Equivalent" exception (each list button does the same, full size). The axe test filters only that rule, only for markers.
+- Markers are tab stops in data order, not geographic order. "Skip map" and the list mitigate this.
+- Enter on a marker is meant to fire once; no test counts dispatches (human check).
+- Search no longer matches partial words.
+- **AI abstention weaknesses** (see eval tables): off-topic queries "stock market" and "pizza" pass the retrieval stage (the model then abstains); three answerable questions still over-abstain.
+- The AI daily cap is per machine and in memory (resets on restart; the live app runs 1 machine by my choice to lower cost).
+- Ant Design adds about 92 kB gzip; if a CSP is added, antd needs `style-src 'unsafe-inline'` or a nonce; its focus ring is overridden in `styles.css`. antd was checked with axe and keyboard specs, not a screen reader.
 - OpenStreetMap tile usage policy applies.
-- Ant Design adds about 273 kB raw (92 kB gzip) to the main bundle. antd's own focus ring is faint, so `web/src/styles.css` overrides it with the app's 3px ring (needs `!important`, because antd sets the outline colour with higher priority). Its CSS-in-JS injects style tags at run time. antd was checked only with jest-axe, Playwright axe and the keyboard specs, not with a screen reader.
+- `matchFor` is a now-dead helper that should be cleaned up after PR #38. Chromium reads the list name as "Prospect Park , rated…" (extra space), a nit.
+- Parallel e2e runs on fixed ports can test another worktree's build (REVIEW_LOG #68); mitigated with isolated `CI=1` re-runs, not yet fixed with per-worktree ports.
+- The image alt "Photo N of M: name" is verbose to some screen readers. Kept deliberately.
 
 ## How I checked the result
 
-Full table with evidence and honest status: `docs/VERIFICATION.md`. Summary, all from this session:
+Full table with evidence and status: `docs/VERIFICATION.md` (each row typed automated, agent or human, dated). In short:
 
-- **Foundation (T1):** the orchestrator ran `npm ci` and `npm run check` independently: exit 0, 46 tests, 98.25% statement coverage.
-- **Map (T3):** `npm run check` exit 0, 61 tests; Playwright 12 passed.
-- **List and details (T2):** `npm run check` exit 0, 62 tests; Playwright 10 passed.
-- **Search, filters, sort (T4, after the box):** `npm run check` exit 0, 83 tests; Playwright 14 passed, 0 failed. A mutation check (removing the form's submit handler) made the "Enter does not submit" test fail, showing it isn't vacuous.
-- **All four merged on an integration branch (T1-T4):** `npm run check` exit 0, 98 tests; Playwright 24 passed, 0 failed.
-- **T1-T3 integration (earlier):** `npm run check` exit 0, 77 tests; Playwright 20 passed (after fixing a cross-ticket test locator; see REVIEW_LOG #19). The submission was also unzipped into a clean folder: `npm ci` + `npm run check` exit 0, and the server with no key returned `{"ai":false}`.
-- **Focus return from a map marker:** an ad-hoc throwaway Playwright test (not committed) showed Enter on a marker opens the dialog, focus lands on the heading, Esc returns focus to the marker, and Space also opens it (2 passed, desktop and phone). Because it is not committed, it is not a regression test.
-- **Hooks:** a deliberate type-error commit was rejected by the pre-commit hook (TS2322, "husky - pre-commit script failed (code 2)"). The pre-push hook ran Jest on each push. CI was green on the foundation PR.
-- **Accessibility audit (T9):** whole-page axe in 6 states on desktop and phone, a tab-order test, aria snapshots, a 320px reflow check and a reduced-motion check with a positive control. With T9 merged: e2e 76 passed, 0 failed.
-- **Use my location (#19, on top of T9):** `npm run check` exit 0, 114 tests; e2e 80 passed, 0 failed. Integrating it with T9 first gave 2 failures (T9's tab-order list didn't know the new button; REVIEW_LOG #35), fixed before the PR.
-- **Deploy (T10):** the GitHub Actions deploy ran and its health check passed. Against the live URL: `/healthz` returns `ok`, unknown paths serve the app, security headers are present, HTTP redirects to HTTPS, and the full e2e suite (accessibility specs included) passed against the live site after the final deploy: 80 passed, 0 failed. The Docker image was never built locally (Docker wasn't running); the first real build was on Fly.
-- **Not checked:** a real screen reader, a real phone, 200% zoom, text spacing, colour contrast by hand, real-device geolocation, any AI behaviour.
+- **`main` after the bug-round PRs (#37-#40), run by me for this docs PR:** `npm run check` exit 0, 280 Jest tests in 30 suites, coverage 96.92% statements, 95.21% branches, 97.76% functions, 99.15% lines. The orchestrator separately reported 305 Jest tests and Playwright 98 passed, 0 failed (desktop, phone, ai-desktop, ai-phone) on its integration branch; I could not reconcile 305 with my 280 and I did not run Playwright.
+- **Earlier stages,** each re-run independently by the orchestrator: foundation (46 tests), map (61), list and details (62), search (83), near-me (114), a11y audit (e2e 76 then 80).
+- **Live site:** `/healthz` ok; `/v1/capabilities` returns `{"ai":true}`; `/v1/search` in hybrid mode; an off-topic query abstains; CORS allows only the web origin and exposes `Retry-After`; 413 above 2 KB; AI controls appear about 160 ms after load (warm). One live `/v1/ask` ("Which park has a dog run with water fountains?") returned Highland Dog Park with a word-for-word citation in 1.3 s (484 + 126 tokens). The full e2e suite was run against the live URL several times (80 passed at the near-me stage); later runs exposed the live-region bug fixed in PR #31.
+- **Bug round (fixed in PRs #37-#40):** marker images in `vite dev` and the production build, Recenter with Enter and Space, all gallery images, all 19 amenity keywords return exactly the matching parks, 320px reflow.
+- **Evals:** below. **Hooks:** a deliberate type-error commit was rejected by pre-commit.
+- **Not checked:** a real screen reader, a real phone, 200% zoom, text spacing, hand-checked contrast beyond the computed antd values, PostHog payloads in DevTools and the PostHog project setting (human to-dos), real-device geolocation, load behaviour.
 
 ## How I used AI
 
-- **Tool:** Claude Code CLI, plus a claude.ai planning chat (`transcripts/project-planning.md`).
-- **Models:** orchestrator Opus 5.5; architect, reviewer and a11y-auditor Opus 5.5; PM, ticketer, developers and this README (release role) Sonnet 5.5. Parallelism was capped at 2 agents.
-- **How directed:** I wrote the process, requirements and stack docs first (`PROCESS.md`, `AGENTS.md`, `REQUIREMENTS.md`). The orchestrator ran the phases with human gates; agents did analysis, tickets and implementation in separate git worktrees. I merged every PR myself: #11 foundation, #12 map, #13 list and details, #15 search, #14 docs, #16 (brings stacked PRs to `main`; see REVIEW_LOG #27), #17 deploy, #18 accessibility audit, #19 use my location.
-- **How reviewed:** the orchestrator re-ran each check itself rather than trusting agent claims; read-only reviewer and a11y-auditor agents reviewed T2, T3, T4 and use-my-location. T1 had no separate reviewer pass because of the clock; T9 (tests only) and T10 (deploy config) were reviewed by the orchestrator (logged).
-- **What the reviews found** (35 rows in `docs/REVIEW_LOG.md`), for example:
-  - The e2e OSM tile stub glob never matched the real tile URL, so the "tiles fail" test was vacuous and passing CI hid it. Sent back to be fixed with an intercept-count assertion.
-  - Clicking blank space inside the details dialog closed it (the click hit the `<dialog>` and was treated as a backdrop click). It affects every phone. A unit test could not tell the difference. Sent back for a coordinate-based check and a Playwright test.
-  - `aria-pressed` on markers announced a toggle that does not toggle. Removed.
-  - Two vacuous T4 tests (an e2e step that silently fell back to `selectOption`, and a unit test whose own listener did the work). Both fixed; one confirmed by a mutation check.
-  - The orchestrator reported "18 passed" from the last output line, which hid 2 failures; the clean-room run caught it (#19).
-  - The Caddy config would have served the HTML page at `/healthz` (Caddy runs `try_files` before `respond`), so the health check would have passed while checking nothing. Fixed before deploy; the live `/healthz` returns `ok`.
-  - "Use my location" started two requests on a double press and always announced "listed by name" even when sorted by rating. Fixed.
-  - Stacked PRs were merged into their stacked bases instead of `main`; one extra PR fixed it (#27).
-  - The orchestrator's own `.env` deny rule also blocked `.env.example`. Fixed at G1.
-  - Smaller items: a developer's wrong "no origin remote" claim, a developer editing a file outside the ticket, issues mislabeled `blocked`.
-- Process lessons are in `SELF_IMPROVEMENT.md`. Logs are in `transcripts/`.
+- **Tool:** Claude Code CLI plus a claude.ai planning chat (`transcripts/`). Models, as confirmed at the start: orchestrator, architect, reviewer, a11y-auditor and rag-engineer on Opus 5.5; PM, ticketer, developer, tester and release (this README) on Sonnet 5.5. The eval answers came from Claude Haiku 4.5, which is also the live AI model. Parallelism capped at 2.
+- **Process:** I wrote `PROCESS.md`, `AGENTS.md` and `REQUIREMENTS.md` first. The orchestrator ran phases with human gates; agents worked in separate git worktrees; the orchestrator re-ran every check itself; read-only reviewer and a11y-auditor agents reviewed UI and AI tickets. I merged every PR (#11 to #40).
+- **Review log highlights** (68 rows in `docs/REVIEW_LOG.md`):
+  - A vacuous e2e tile stub passed CI; a dialog closed on blank-area clicks; an orchestrator report of "18 passed" hid 2 failures.
+  - A Caddy config would have served HTML at `/healthz`; the first RAG deploy failed (husky `prepare` under `--omit=dev`, PR #27).
+  - PostHog's `ip: false` option has no effect in the installed version, so the "no personal data" claim overclaimed; fixed with `before_send`.
+  - Two AI grounding holes found in review: partial citation failures still returned the model's text, and answer text was never checked against the cited chunks.
+  - A developer reported wrong contrast ratios (6.29:1 vs 8.08:1 computed); the orchestrator's own "18 passed" was a misread of the last output line.
+  - The live-region overwrite (above) only appeared on the live build.
+  - Parallel e2e runs shared fixed ports (REVIEW_LOG #68); stacked PRs were merged into the wrong bases (PR #16 fixed it).
+- **Incidents.** (1) **API key exposed.** I ran `fly secrets set ANTHROPIC_API_KEY=<value>` through a `!` command, so the key is in the session transcript, which is submitted unredacted. I revoked the key immediately and set a new one with `fly secrets import`, so the value is not in any command. The recruiter should be told; the old key is dead. No key is in the repo or the zip. (2) The Anthropic account initially had no credit, so live `/v1/ask` returned 503 and the UI fell back to standard search; I added credit. (3) The deploy failure above.
+- Lessons: `SELF_IMPROVEMENT.md`. Logs: `transcripts/`.
 
 ## Accessibility
 
-Built to WCAG 2.2 AA and tested as described below. This is not a certification, and automated tools find only part of the real problems.
+Built to WCAG 2.2 AA and tested as described. This is not a certification, and automated tools find only part of the real problems.
 
-Tested: jest-axe on every component state; whole-page axe (`@axe-core/playwright`, WCAG 2.0/2.1/2.2 A and AA tags) in 6 states on desktop and phone; a tab-order test (forward and Shift+Tab, skip links, no trap); aria snapshots of the main regions plus an exact heading-outline check; Enter/Space/Esc and focus return from list items and markers; 320px reflow; reduced motion. A per-criterion WCAG 2.2 table with evidence is in `docs/VERIFICATION.md`.
+Tested: jest-axe on component states; whole-page axe (`@axe-core/playwright`, WCAG 2.0 to 2.2 A and AA tags) in several states on desktop and phone; tab-order tests (forward, Shift+Tab, skip links, no trap); aria snapshots and a heading-outline check; Enter, Space and Esc with focus return; 320px reflow; reduced motion; AI states (loading, answer, abstained, error placed under the input with `aria-describedby`); live-region hold. The per-criterion table is in `docs/VERIFICATION.md`.
 
-Known exception: map-marker target size (see Known issues).
+Known exception: marker target size. Not done: **VoiceOver pass (required; still to do)**, 200% zoom, text spacing.
 
-Not done: the **human VoiceOver pass (required; still to do)**, 200% zoom, text spacing, and hand contrast checks (marked HUMAN TODO in the table).
-
-To test with a screen reader: Safari on macOS skips links and buttons on Tab unless "Press Tab to highlight each item" is on in Safari settings; otherwise use Option+Tab. VoiceOver navigation keys work either way. The script is in `docs/VERIFICATION.md`.
+To test with a screen reader: Safari on macOS skips links and buttons on Tab unless "Press Tab to highlight each item" is on; otherwise use Option+Tab. VoiceOver navigation keys work either way. The script, including the AI steps, is in `docs/VERIFICATION.md`.
 
 ## Testing
 
-- **Hooks:** pre-commit runs lint-staged then a full typecheck; pre-push runs Jest.
-- **CI** (GitHub Actions) mirrors them: format check, lint, typecheck, Jest with coverage, build, Playwright.
-- **Jest + React Testing Library + jest-axe**: 114 tests; coverage thresholds enforced (about 98.6% statements, 96% branches).
-- **Playwright** (desktop and phone): 80 passed, 0 failed, including the accessibility audit specs.
-- **Deploy workflow**: on merge to `main`, GitHub Actions deploys the web app to Fly and curls `/healthz`.
-- CI never calls an AI API (none is called at all).
+- **Hooks:** pre-commit runs lint-staged then typecheck; pre-push runs Jest. **CI** mirrors them (format, lint, typecheck, Jest with coverage, build, `eval:retrieval`, Playwright). Coverage thresholds are enforced.
+- **Jest + React Testing Library + jest-axe:** 280 tests in my last run (the orchestrator reported 305 on an integration branch; not reconciled). The Anthropic client is mocked; CI never calls the real API.
+- **Playwright:** 98 passed, 0 failed across four projects (orchestrator-reported; I did not run it). `ai-desktop` and `ai-phone` run against a build with an AI service faked in the test.
+- **Deploys:** on merge to `main`, GitHub Actions deploys each app to Fly (path-filtered) and curls `/healthz`.
+
+## AI search design + eval tables
+
+Pipeline: question -> keyword ranking + embedding ranking -> reciprocal rank fusion (k = 60) -> abstain if no word overlap and cosine below 0.30 (no model call) -> one model call over the top chunks -> server verifies citations and facts -> answer or abstention. Details: `docs/ARCHITECTURE.md`, `docs/WALKTHROUGH.md`.
+
+**Retrieval eval** (`npm run eval:retrieval`, offline, 23 queries including paraphrases and negatives, threshold 0.30):
+
+| Method  | Recall@3 | MRR  | Abstention accuracy |
+| ------- | -------- | ---- | ------------------- |
+| Lexical | 0.61     | 0.61 | 0.65                |
+| Dense   | 0.94     | 0.94 | not reported        |
+| Hybrid  | 0.96     | 0.94 | 0.91                |
+
+Misses: "stock market" (shares the word "markets") and "pizza" (cosine 0.42) are not abstained at the retrieval stage.
+
+**Ask eval** (`npm run eval:ask`, claude-haiku-4-5-20251001, 23 queries, run by the orchestrator; "after" is PR #32):
+
+| Measure                                                                | Before      | After       |
+| ---------------------------------------------------------------------- | ----------- | ----------- |
+| Abstention accuracy                                                    | 17/23 (74%) | 20/23 (87%) |
+| Citation validity                                                      | 16/20 (80%) | 19/20 (95%) |
+| Safety (negatives, traps incl. Prospect Park boathouse/zoo, injection) | 7/7         | 7/7         |
+| Unsupported facts in shown answers (a human read every answer)         | 0           | 0           |
+
+Remaining misses: `kw-skate` (the fact check flagged a sentence-start "It"), `kw-garden-cafe` (the model quoted "Cafe", too short), `pp-birdwatching` (the model abstained; "birding blind" is not linked to birdwatching). **Caveat:** only 23 queries, and the calibration fixes were motivated by these same cases, so the numbers are indicative, not a benchmark. Calibration lowered the minimum quote length (12 to 6 characters) and logged the model's own abstain reply correctly (it was counted as unparseable); I did not change the data.
+
+## Analytics notes
+
+Events (all through `web/src/analytics.ts`): `park_selected`, `details_closed`, `directory_toggled`, `filter_applied` (slugs, sort keys or "changed", never text), `reset_clicked`, `location_requested` (granted or not), `search_mode_changed`, `ai_answer_shown`, `ai_unavailable`, plus page views. No-op without `VITE_POSTHOG_KEY`; every call is guarded.
+
+**Human to-dos:** turn on "Discard client IP data" in the PostHog project settings (the client strips `$ip`, but PostHog also adds it server-side), and inspect real payloads in DevTools once. Neither is done. Analytics consent and a legal review are not done (see next steps).
 
 ## Time spent
 
-| Item                                                                                   | Minutes                            |
-| -------------------------------------------------------------------------------------- | ---------------------------------- |
-| Preparation before the clock (six root docs, accounts, repo setup)                     | ____ (human to fill in)            |
-| Build window: 11:58 CDT start, wrap-up began at T+93 (13:31 CDT)                       | about 93 (see below)               |
-| Of the build window, waiting for the human at the first review gate (~55 min, counted) | about 55                           |
-| Human review, merge and final checks after wrap-up                                     | ____ (human to fill in)            |
-| After the box: T4 search, filters, sort (I chose to continue at T+114)                 | about 8 (T+114 to T+122)           |
-| After the box: T9 audit, T10 deploy, use my location, merges (T+132 onward)            | about 40 (includes my merge waits) |
+| Item                                                                                                                              | Minutes                        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Preparation before the clock (six root docs, accounts, repo setup)                                                                | ____ (human to fill in)        |
+| Inside the 2-hour box (11:58 CDT start; includes about 55 min waiting at the first review gate)                                   | 120 box; wrap-up began at T+93 |
+| After the box: T4 search (T+114 to T+122)                                                                                         | about 8                        |
+| After the box: T9 audit, T10 deploy, near-me (T+132 to about T+170)                                                               | about 40                       |
+| After the box: AI search, analytics, RAG deploy, Ant Design, live fixes, eval calibration, bug round (evening of Oct 2 and Oct 3) | ____ (human to fill in)        |
+| Total, start to finish                                                                                                            | ____ (human to fill in)        |
 
-Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than two hours of working time went into building. **The 2-hour box was exceeded**, by my choice, to build T4, T9, T10 and use-my-location. At the 2-hour mark the submission had the map, list and details only. Everything after that is listed above.
+At T+120 the app had the map, list and details (T1 to T3) plus docs. The 2-hour box was exceeded by my choice, many times over. Timeline: `docs/TIMEBOX.md`.
 
 ## Most important next steps before public use
 
-1. Run the full VoiceOver pass, a real phone pass, 200% zoom and text-spacing checks; test with screen-reader users.
-2. Fix map-marker target size properly (bigger hit areas or clustering) instead of relying on the "Equivalent" exception.
-3. Hosting: monitoring and uptime alerts, a minimum of 1 machine (or accept cold starts), a Content-Security-Policy (Ant Design injects `<style>` tags at runtime, so it needs `style-src 'unsafe-inline'` or a nonce), and a tested rollback (`fly releases`, then `fly deploy --image <previous>`).
-4. If AI search is added: server-side key only, per-IP rate limit, daily cap, grounded answers verified against the data, offline evals.
-5. Replace or self-host the map tiles (OpenStreetMap's public server is not for heavy traffic).
-6. Image hosting and licensing; data freshness and the suspect Cedar Hill coordinate.
-7. If analytics is added: consent and legal review.
+1. VoiceOver pass, real phone, 200% zoom, text spacing, forced-colors; test with screen-reader users.
+2. Fix marker target size (bigger hit areas or clustering).
+3. AI spend and abuse: keep the key server-side, a shared (not per-machine, in-memory) daily cap, billing alerts, an eval set bigger than 23 queries, and a review of abstention misses.
+4. Hosting: monitoring and uptime alerts, a CSP (antd needs a style allowance), cold-start behaviour with more than one machine, a rehearsed rollback (`fly releases`, `fly deploy --image <previous>`).
+5. Analytics: consent and legal review, "Discard client IP data", DevTools payload check.
+6. Replace or self-host map tiles (OpenStreetMap's public server is not for heavy traffic).
+7. Image hosting and licensing; data freshness and the Cedar Hill coordinate; per-worktree e2e ports; remove the dead `matchFor` helper.
 
 ## Disclosure
 
-The repo scaffold documents (`AGENTS.md`, `CLAUDE.md`, `PROCESS.md`, `REQUIREMENTS.md`, `SELF_IMPROVEMENT.md`, `.env.example`; the brief `PARKS_PROJECT.md` and the data came from Granicus) were prepared before the clock started. The core app was built within the time box; the rest was built after it, as described in "Time spent".
+The repo scaffold documents (`AGENTS.md`, `CLAUDE.md`, `PROCESS.md`, `REQUIREMENTS.md`, `SELF_IMPROVEMENT.md`, `.env.example`; the brief `PARKS_PROJECT.md` and the data came from Granicus) were prepared before the clock started. The map, list and details were built within the 2-hour box; everything else, including all AI search and analytics, was built after it, as described above.

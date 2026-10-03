@@ -1,57 +1,71 @@
 # Walkthrough (for the 30-minute follow-up)
 
-## 1. Demo script (about 4 minutes)
+Scope note: inside the 2-hour box only the map, list and details were built. Everything below that mentions search, AI, analytics, Ant Design, deploys or the bug round was built after the box, at my request.
 
-Use the live site https://peter-parks-web.fly.dev (open it a minute early: the machine auto-stops when idle), or run `npm ci` then `npm run dev:web` and open http://localhost:5173. No keys needed.
+## 1. Demo script (about 5 minutes)
 
-1. **Core view (30s).** Map with 12 markers and the park directory. Say plainly: AI search and analytics were cut; within the 2-hour box only map, list and details were done, and the rest came after.
-2. **List to details (45s).** Click a park in the directory. A modal dialog opens, focus moves to the park heading. Point out "Not listed" for missing fields, hours shown verbatim, and the "image unavailable" placeholder (all sample images fail by design).
-3. **Close and focus return (30s).** Press Esc: dialog closes, focus is back on the list button. Reopen and click the backdrop, then click blank space inside the dialog (it must NOT close; this was a bug caught in review).
-4. **Keyboard on the map (60s).** Use Tab from the top: "Skip to results", "Skip map", then the markers. Enter or Space on a marker opens the same details. Esc returns focus to that marker. Note the selected-marker outline.
-5. **Sparse park (30s).** Open `old-mill-botanical-garden` (null description) and `cedar-hill-nature-preserve` (null rating, suspect coordinate).
-6. **Search, filters, sort, near-me (45s).** Type "dog", tick an amenity with Space, sort by rating, press Reset; with a screen reader you hear one result count after typing stops. Press "Use my location" and deny it: a message appears and nothing breaks.
-7. **Phone width (30s).** Narrow the window or use device emulation: directory collapses, details is a full-screen sheet.
-8. **Gates (30s).** Show `docs/REVIEW_LOG.md` and `docs/VERIFICATION.md` (honest HUMAN TODO rows).
+Use the live site https://peter-parks-web.fly.dev. **Open it a minute early and run one AI question first:** the web and AI machines auto-stop when idle, and the AI service loads an embedding model on a cold start. Or run locally: `npm ci`, then `npm run dev:web` (standard mode) or `npm run dev` with your own key in `.env.local` (AI).
+
+1. **Core view (30s).** Map with 12 markers, the directory, one h1. Say plainly what existed at T+120 (map, list, details) and what came after.
+2. **List to details (30s).** Click a park. A modal dialog opens, focus on the park heading. Point out "Not listed", verbatim hours, and the "image unavailable" placeholders. Open Prospect Park: its gallery shows both images, each with its own placeholder.
+3. **Ratings (15s).** Each list item shows "★ 4.7" next to the title (read as "rated 4.7 out of 5"); a park without a rating says "No rating".
+4. **Keyboard on the map (45s).** Tab: "Skip to results", "Skip map", then markers. Enter or Space opens details; Esc returns focus to the marker. Zoom out and press **Recenter map** with Enter: the view returns to the starting bounds.
+5. **Search and filters (30s).** Type "lake": only parks that list a lake match (Lakeshore Point no longer does; whole-word matching). Tick an amenity, sort by rating, Reset.
+6. **AI search (90s).** The AI controls appear a moment after load because the page asked `/v1/capabilities`. Mode radios: Filters, AI, Both (default). Ask "Which park has a dog run with water fountains?": the answer names Highland Dog Park with a citation; activate the citation and the same details dialog opens. Ask something off-topic ("what is the stock market?"): it abstains. Switch to AI mode: the standard filters leave the page; switch to Filters: AI results clear. With a screen reader, "Answer ready." is announced once, not the streamed text (there is no streaming).
+7. **Failure path (20s).** Say what happens cold, capped or rate-limited: an error appears under the Ask input and the standard search keeps working. The browser never needs the service.
+8. **Phone width (20s).** Directory collapses, details is a full-screen sheet.
+9. **Gates (20s).** `docs/REVIEW_LOG.md`, `docs/VERIFICATION.md` (honest HUMAN TODO rows, including VoiceOver and the PostHog checks).
 
 ## 2. Architecture in plain language
 
-- One npm package with `web/` (React 19, TypeScript, Vite, Leaflet), `server/` (a Fastify skeleton with `/healthz` and `/v1/capabilities`), and `shared/` (zod schemas and a loader). The data is `db/parks.sample.json`, read directly. No database.
-- `shared/parks.ts` validates and normalizes each park (null or empty becomes "missing"); parks with no valid coordinate are listed but not mapped.
-- The app shell has named slots (list, map, details, search bar) so tickets did not edit the same files. One selected-park state feeds the list, the map and the dialog, so any trigger opens the same details.
-- Focus helpers in `web/src/a11y/focus.ts` return focus to the element that opened the dialog.
-- The server reports `{ai:false}` without a key and the web app renders no AI UI at all. This part is a skeleton: no AI feature exists yet, and the server is not deployed.
-- Deploy: a two-stage Docker image (Node builds the static site, Caddy serves it on 8080 with `/healthz` and security headers) on one auto-stopping Fly machine. GitHub Actions deploys on merge to `main` and curls `/healthz`. Rollback: `fly releases -a peter-parks-web --image`, then `fly deploy --image <previous>`.
+- One npm package: `web/` (React 19, TypeScript, Vite, Leaflet, Ant Design for styling), `server/` (Fastify RAG service), `shared/` (zod schemas, the API contract and a loader). The data is `db/parks.sample.json`, read directly. No database.
+- `shared/parks.ts` validates and normalizes each park (null or empty becomes "missing"). One selected-park state feeds the list, the map and the dialog.
+- **RAG pipeline in plain words.**
+  1. At build time, each park is cut into small chunks by field group (description, amenities, address and so on). Each chunk starts with the park name; a missing field makes no chunk.
+  2. A question is ranked two ways: by keywords (BM25-style) and by meaning (a small embedding model running on the server, cosine similarity). The two rankings are merged with reciprocal rank fusion.
+  3. If the question shares no words with the data and nothing is close in meaning (cosine below 0.30), the server answers "I don't have that information" without calling the model.
+  4. Otherwise one Claude Haiku 4.5 call (max 400 tokens, no tools) is given only the retrieved chunks, each labeled with a `chunkId`, and told to reply in JSON with an answer and quoted citations. The question is treated as untrusted text.
+  5. The server checks the reply: every cited chunk was retrieved; every quote really appears in that chunk, is at least 6 characters and says more than the park name; every name and number in the answer appears in the cited text. One failure and the whole answer becomes an abstention. The browser gets one JSON response.
+  6. Guards: key only in the server environment, CORS to the web origin, 20 requests per minute per IP, a 2 KB body limit (413), a daily cap of 300 model calls per machine, logs without keys.
+- **Capability gating.** `GET /v1/capabilities` returns `{ai: true}` only with a non-empty key. The web app renders AI controls only after that answer; otherwise they are not in the DOM.
+- **One polite live region** (`LiveRegion.tsx`) announces counts, mode changes, "AI search is available.", "Answer ready." and errors, holding each for 1.5 s so one does not overwrite another.
+- **Analytics** go through one wrapper (`analytics.ts`), cookieless, no-op without a key.
+- **Deploy:** two Fly apps. Web: Docker, Node build then Caddy on 8080 with `/healthz` and security headers. RAG: Node 22 slim, 1 GB, model and index baked in, one machine. GitHub Actions deploys each on merge to `main` and curls `/healthz`. Rollback: `fly releases -a <app> --image`, then `fly deploy --image <previous>`.
 
 ## 3. Decisions and trade-offs
 
-- Native `<dialog>` instead of a custom modal: less code and correct trapping, but backdrop clicks need care (see review candidate 1).
-- Real focusable markers with Space handling, plus "Skip map": simple and testable, but 12 tab stops in data order.
-- Read the data file directly and normalize in memory: no derived file to keep in sync, but every consumer must go through the normalizer.
-- Gates and hooks over speed: the orchestrator re-ran every check itself. This cost time but caught real problems (REVIEW_LOG).
-- Stacked PRs (#12 and #13 on #11) to save time: faster, but they were merged into their stacked bases instead of `main`, and one extra PR (#16) was needed. I'd avoid stacking next time.
-- Accepting the WCAG 2.5.8 "Equivalent" exception for overlapping map markers instead of clustering: honest and documented, but a real fix is better.
+- Native `<dialog>`: less code and correct trapping, but backdrop clicks need care.
+- Real focusable markers plus "Skip map": simple and testable, but 12 tab stops in data order. The 2.5.8 target-size "Equivalent" exception instead of clustering: honest, but a real fix is better.
+- Strict verification of AI answers over answer quality: the checker rejects whole answers on any failure. This costs recall (3 of 23 eval queries still miss) but kept shown unsupported facts at 0.
+- Hybrid retrieval with local embeddings: better paraphrase recall (0.96 vs 0.61 lexical) but a model download and a cold start.
+- No streaming: a screen reader never hears token-by-token text, at the price of a short wait.
+- Whole-word search: keyword results are exact (19 amenity keywords checked), but partial words no longer match.
+- Ant Design for styling only: nicer controls at +92 kB gzip and a future CSP allowance; native dialog, selects and checkboxes kept for accessibility.
+- One Fly machine for the AI service to lower cost: the daily cap is then roughly the cap, but cold starts happen.
+- Stacked PRs saved time but were merged into the wrong bases once (#16 fixed it); I would avoid them.
 
 ## 4. What was left out
 
-AI search (T5-T7), PostHog analytics (T8), the RAG service deployment, distance labels in the list, and transitions. Within the 2-hour box, T4, T9 and T10 were also cut (about 55 minutes went to waiting at the first human gate); I chose to build them afterwards, and the README's "Time spent" says so.
+VoiceOver pass, real phone, 200% zoom, forced-colors, streaming, a CSP, monitoring, shared daily cap, distance labels in the list, partial-word search, image hosting. Within the box I also cut search, the audit and deploy, and built them after.
 
 ## 5. The AI-usage story
 
-Claude Code orchestrated; Opus 5.5 handled orchestration, architecture and review; Sonnet 5.5 handled PRD, tickets, implementation and this documentation. Agents worked in separate worktrees under a documented process. The human approved at gates and merges. Real mistakes found: a vacuous e2e tile stub that passed CI, a dialog that closed on blank-area clicks, a misleading `aria-pressed`, two vacuous search tests, a Caddy config that would have served HTML at `/healthz`, a double-request bug in "use my location", two cross-ticket test collisions caught only by integration runs, the orchestrator's own misreported "18 passed", and an over-broad `.env` deny rule that blocked `.env.example`. See `docs/REVIEW_LOG.md` and `SELF_IMPROVEMENT.md`.
+Claude Code orchestrated. Opus 5.5 did orchestration, architecture, review and the RAG ticket reviews; Sonnet 5.5 did PRD, tickets, implementation and docs; the live model is Haiku 4.5. Agents worked in separate worktrees under a documented process; I approved at gates and merged every PR. Real problems found: a vacuous e2e stub, a dialog that closed on blank clicks, a Caddy `/healthz` that served HTML, a PostHog option with no effect (so a privacy claim overclaimed), two AI grounding holes (partial citation failure still returned the text; answer text unchecked), `Retry-After` hidden by CORS, a late announcement overwriting a user message in the live region, wrong contrast figures from a developer, a parallel e2e run testing the wrong build, and a failed first RAG deploy. Incidents: I pasted an API key into a `!` command (it is in the transcript; the key was revoked and replaced via `fly secrets import`; tell the recruiter), and the Anthropic account initially had no credit. See `docs/REVIEW_LOG.md` and `SELF_IMPROVEMENT.md`.
 
 ## 6. What I would change before release
 
-- Do the VoiceOver, real-phone, 200% zoom and text-spacing passes; test with screen-reader users.
-- Hosting: monitoring and alerts, a CSP, keep one machine warm (or accept cold starts), and rehearse the rollback.
-- Fix marker target size with bigger hit areas or clustering.
-- Replace the public OSM tiles; add real image hosting.
-- Add a test that counts marker Enter dispatches (exactly once).
-- Likely failures: tile server limits, the placeholder Cedar Hill coordinate, stale data, focus return if markers are re-rendered while the dialog is open.
+- VoiceOver, real phone, 200% zoom, text spacing, forced-colors; users who rely on screen readers.
+- Bigger marker hit areas or clustering.
+- A shared daily cap and billing alerts; a larger eval set and work on the three remaining misses.
+- Monitoring, a CSP, rehearsed rollback, per-worktree e2e ports.
+- Analytics: "Discard client IP data" in PostHog, a DevTools payload check, consent and legal review.
+- Replace public OSM tiles; real image hosting.
+- Likely failures: cold starts, an unfunded API account (503 and fallback), tile limits, stale data, the Cedar Hill coordinate.
 
 ## 7. Three review candidates
 
 Pick one, review it for real, and record what you found in `docs/REVIEW_LOG.md`.
 
-1. **Dialog backdrop and focus return.** File: `web/src/components/ParkDetails/ParkDetails.tsx` (the click handler using `getBoundingClientRect`, the `showModal` effect, and the focus-return effect near the end). Could be wrong: a click just inside the edge counted as outside; focus not returned if the trigger was removed or re-rendered; StrictMode double effect. Check: open from a list button and from a marker, then click blank dialog space (stays open), click the backdrop (closes), press Esc, and confirm where focus lands each time.
-2. **Marker keyboard handling.** File: `web/src/components/ParkMap/ParkMap.tsx` (the `onKeyDown` listener added to each marker icon). Could be wrong: Enter firing twice (our handler plus Leaflet's click), Space scrolling the page, listener leaks when markers re-render. Check: add a counter on the select handler, press Enter and Space on a marker, confirm exactly one call each and no page scroll.
-3. **Data normalization.** File: `shared/parks.ts`, `normalizePark` (and `cleanString`, `cleanCoords`). Could be wrong: a valid value dropped (for example a rating of 0, or coordinates 0), a placeholder treated as real, hours altered. Check: run `npm run validate:data`, then read `shared/parks.test.ts` and try a park with every optional field missing and one with odd values.
+1. **Answer verification.** `server/src/rag/verifyCitations.ts`, `verifyAnswer` (with `quoteProblem` and `unsupportedFacts`). Could be wrong: the fact check is a word-presence rule, so a wrong claim made only of words found in the cited chunk (for example swapped attributes) passes; a legitimate capitalised word not in the chunk abstains (this is what flagged "It" in `kw-skate`); the 6-character quote minimum is a calibration choice that may be too loose or too tight; parkId must come from our chunk, never the model. Check: read `server/test/verifyCitations.test.ts`; feed `verifyAnswer` a reply with a fabricated quote, a quote of only the park name, a real quote with a false number, and a mixed good-and-bad citation list, and confirm each abstains; run `npm run eval:ask` with your own key and read every answer.
+2. **Live region.** `web/src/a11y/LiveRegion.tsx`. Could be wrong: the 1.5 s hold queues only the latest message, so a rapid second message silently drops the one before it; timers after unmount; the clear-then-set trick may not repeat identical text in every screen reader; one region means every feature competes for it. Check: read `LiveRegion.test.tsx`; with VoiceOver, trigger "Sorted by distance" then an AI availability change within a second and listen; run the live-site e2e.
+3. **Analytics privacy.** `web/src/analytics.ts`, `privacyOptions`. Could be wrong: option names were checked against posthog-js 1.435 types and may change on upgrade; a missed remote-config feature could re-enable capture; `capture_pageview` is on; `$ip` is stripped client-side but PostHog adds it server-side unless the project setting is on. Check: with the key set, open DevTools Network, filter on the PostHog host, and read the payloads for cookies, coordinates, query text and IP; confirm no cookies or storage entries; confirm Do Not Track stops all capture; turn on "Discard client IP data" in the project.

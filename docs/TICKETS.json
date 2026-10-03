@@ -333,5 +333,67 @@
       "docs/TICKETS.json"
     ],
     "issue": 28
+  },
+  {
+    "id": "B1",
+    "title": "[Bug A] Map: marker images in dev and Recenter control",
+    "body": "Human-reported bug from the bug round, after the 2-hour box. Full scenario text is in the GitHub issue. Fixed in the linked PR.",
+    "acceptance": [
+      "Marker image URLs have no doubled path in dev or preview builds; e2e checks naturalWidth > 0.",
+      "A labelled, keyboard-operable Recenter map button (44px, visible focus) restores the initial bounds and zoom without moving focus; unit and e2e tests; axe clean."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "S",
+    "labels": ["core", "size:S"],
+    "files_touched": ["web/src/components/ParkMap/**", "e2e/map.spec.ts"],
+    "issue": 33
+  },
+  {
+    "id": "B2",
+    "title": "[Bug B] Directory: no AI text bleed, AI error under input, rating next to title",
+    "body": "Human-reported bug from the bug round, after the 2-hour box. Full scenario text is in the GitHub issue. Fixed in the linked PR.",
+    "acceptance": [
+      "AI matchedText is not shown in the directory list.",
+      "AI errors render under the Ask input, tied with aria-describedby, and are still announced once.",
+      "Each list item shows a rating (visible star plus 'rated N out of 5' text) or 'No rating'; the name still starts the accessible name."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "S",
+    "labels": ["core", "size:S"],
+    "files_touched": ["web/src/components/ParkList/**", "web/src/components/AiPanel/**", "e2e/**"],
+    "issue": 34
+  },
+  {
+    "id": "B3",
+    "title": "[Bug C] Park details: render every image in the gallery",
+    "body": "Human-reported bug from the bug round, after the 2-hour box. Full scenario text is in the GitHub issue. Fixed in the linked PR.",
+    "acceptance": [
+      "Every park image is rendered with alt 'Photo N of M: name'.",
+      "Each failed image has its own labelled placeholder; 'Photos not listed' when there are none; tests for 0, 1 and 2 images; e2e on Prospect Park."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "S",
+    "labels": ["core", "size:S"],
+    "files_touched": ["web/src/components/ParkDetails/**", "e2e/list-details.spec.ts"],
+    "issue": 35
+  },
+  {
+    "id": "B4",
+    "title": "[Bug D] Amenity keyword search: whole-word matching",
+    "body": "Human-reported bug from the bug round, after the 2-hour box. Full scenario text is in the GitHub issue. Fixed in the linked PR.",
+    "acceptance": [
+      "Text matching uses whole words with simple plural tolerance; Wi-Fi and wifi are equal.",
+      "A unit test per amenity keyword (19) asserts the results equal the parks that list it; 'Lake' no longer matches Lakeshore Point.",
+      "The trade-off (partial words no longer match) is documented."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "S",
+    "labels": ["core", "size:S"],
+    "files_touched": ["web/src/search/**", "e2e/search.spec.ts"],
+    "issue": 36
   }
 ]
