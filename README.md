@@ -118,6 +118,8 @@ One derived file, `db/park-images.json`. `db/parks.sample.json` is untouched and
 
 ## How I checked the result
 
+- **My own review (human):** I closed three review-log items myself: Tab focus lands on each map marker (#17); VoiceOver reads a list item as "Cedar Hill Nature Preserve, No rating, button, list 12 items" (#18); a full Tab pass in a real browser matched the reading order with no traps (#31). Recorded as REVIEW_LOG #70-#72. I also did the VoiceOver walkthrough (no blocking issues).
+
 Full table with evidence and status: `docs/VERIFICATION.md` (each row typed automated, agent or human, dated). In short:
 
 - **Final `main` (after #37-#40):** `npm run check` exit 0, **305 Jest tests**, coverage 96.93% statements, 95.25% branches, 97.77% functions, 99.15% lines; `CI=1 npm run e2e` **98 passed, 0 failed** (desktop, phone, ai-desktop, ai-phone). Run by the orchestrator on the final code. (An earlier docs draft quoted 280 because its branch predated #37-#40.)
@@ -188,7 +190,7 @@ Remaining misses: `kw-skate` (the fact check flagged a sentence-start "It"), `kw
 
 Events (all through `web/src/analytics.ts`): `park_selected`, `details_closed`, `directory_toggled`, `filter_applied` (slugs, sort keys or "changed", never text), `reset_clicked`, `location_requested` (granted or not), `search_mode_changed`, `ai_answer_shown`, `ai_unavailable`, plus page views. No-op without `VITE_POSTHOG_KEY`; every call is guarded.
 
-**Human to-dos:** turn on "Discard client IP data" in the PostHog project settings (the client strips `$ip`, but PostHog also adds it server-side), and inspect real payloads in DevTools once. Neither is done. Analytics consent and a legal review are not done (see next steps).
+**Done:** "Discard client IP data" is turned on in the PostHog project settings (the client also strips `$ip`; PostHog would otherwise add it server-side). **Still to do:** inspect real payloads in DevTools once. Analytics consent and a legal review are not done (see next steps).
 
 ## Time spent
 
@@ -216,7 +218,7 @@ Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than t
 2. Fix marker target size (bigger hit areas or clustering).
 3. AI spend and abuse: keep the key server-side, a shared (not per-machine, in-memory) daily cap, billing alerts, an eval set bigger than 23 queries, and a review of abstention misses.
 4. Hosting: monitoring and uptime alerts, a CSP (antd needs a style allowance), cold-start behaviour with more than one machine, a rehearsed rollback (`fly releases`, `fly deploy --image <previous>`).
-5. Analytics: consent and legal review, "Discard client IP data", DevTools payload check.
+5. Analytics: consent and legal review, and a DevTools payload check.
 6. Replace or self-host map tiles (OpenStreetMap's public server is not for heavy traffic).
 7. Image hosting and licensing; data freshness and the Cedar Hill coordinate; per-worktree e2e ports; remove the dead `matchFor` helper.
 
