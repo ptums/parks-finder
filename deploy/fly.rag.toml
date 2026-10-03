@@ -1,0 +1,32 @@
+app = "peter-parks-rag"
+primary_region = "dfw"
+
+[build]
+  dockerfile = "server.Dockerfile"
+
+# Non-secret settings only. Set ANTHROPIC_API_KEY and CORS_ORIGIN with `fly secrets set`.
+[env]
+  PORT = "8080"
+  ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+  RATE_LIMIT_PER_MINUTE = "20"
+  AI_DAILY_REQUEST_CAP = "300"
+  LOG_LEVEL = "info"
+  MODEL_CACHE_DIR = "/app/model-cache"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/healthz"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "30s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
