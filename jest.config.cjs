@@ -49,6 +49,8 @@ module.exports = {
     '!web/src/main.tsx',
     '!web/src/env.ts',
     '!server/src/index.ts',
+    // Thin adapter over the ESM-only model library; exercised by build:index and eval:retrieval.
+    '!server/src/rag/embedder.ts',
     '!**/index.ts',
   ],
   coveragePathIgnorePatterns: ['/node_modules/', '/test/'],
