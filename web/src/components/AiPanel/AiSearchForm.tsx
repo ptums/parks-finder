@@ -17,7 +17,7 @@ function reasonFor(error: unknown) {
 }
 
 export function AiSearchForm({ parks }: { parks: Park[] }) {
-  const { aiQuery, aiStatus, aiResults } = useAppState();
+  const { aiQuery, aiStatus, aiResults, aiError } = useAppState();
   const dispatch = useDispatch();
   const announce = useAnnounce();
   const status = useRef(aiStatus);
@@ -65,19 +65,28 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
 
   return (
     <form role="search" className="search-form" aria-label="AI search" onSubmit={submit}>
-      <label htmlFor="ai-query" className="search-field">
-        Ask about the parks
-        <input
-          id="ai-query"
-          ref={input}
-          name="ai-query"
-          aria-label="Ask about the parks" // same as the visible label; jsx-a11y needs it
-          type="text"
-          maxLength={200}
-          value={aiQuery}
-          onChange={(e) => dispatch({ type: 'setAiQuery', query: e.target.value })}
-        />
-      </label>
+      <div className="search-field">
+        <label htmlFor="ai-query" className="ai-label">
+          Ask about the parks
+          <input
+            id="ai-query"
+            ref={input}
+            name="ai-query"
+            aria-label="Ask about the parks" // same as the visible label; jsx-a11y needs it
+            aria-describedby={aiError ? 'ai-error' : undefined}
+            type="text"
+            maxLength={200}
+            value={aiQuery}
+            onChange={(e) => dispatch({ type: 'setAiQuery', query: e.target.value })}
+          />
+        </label>
+        {/* Announced once through the live region in submit(); no role=alert here. */}
+        {aiError && (
+          <p id="ai-error" className="ai-error">
+            {aiError}
+          </p>
+        )}
+      </div>
       <Button type="primary" htmlType="submit" className="search-button" aria-disabled={loading}>
         Ask
       </Button>

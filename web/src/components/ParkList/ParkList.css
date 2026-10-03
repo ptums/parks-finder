@@ -39,3 +39,20 @@
   border-color: var(--accent);
   border-width: 2px;
 }
+
+/* Inline, so the name and rating wrap together at 320px and the accessible name has no stray gaps. */
+.park-list-title {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.park-list-rating {
+  margin-left: 0.75rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* #595959: 5.59:1 on the selected background (#d3ecd7), 7.0:1 on white. */
+.park-list-rating--none {
+  color: #595959;
+}

@@ -82,4 +82,25 @@ describe('ParkList', () => {
     await openDirectory();
     expect(await axe(container)).toHaveNoViolations(); // open
   });
+
+  it('shows the rating next to the name, with a screen reader name', async () => {
+    const rated: Park[] = [{ id: 'a', name: 'Alpha Park', amenities: [], images: [], rating: 4.7 }];
+    render(
+      <StateProvider>
+        <ParkList parks={rated} />
+      </StateProvider>,
+    );
+    await openDirectory();
+    const button = screen.getByRole('button', { name: /^Alpha Park ?, rated 4\.7 out of 5/ });
+    expect(button).toHaveTextContent('★ 4.7');
+    expect(button.querySelector('[aria-hidden="true"]')).toHaveTextContent('★');
+  });
+
+  it('shows "No rating" for a park without one, and is axe clean', async () => {
+    const { container } = setup();
+    await openDirectory();
+    expect(screen.getByRole('button', { name: /Beta Park/ })).toHaveTextContent('No rating');
+    expect(screen.getByRole('button', { name: /Alpha Park/ })).toHaveTextContent('No rating');
+    expect(await axe(container)).toHaveNoViolations();
+  });
 });
