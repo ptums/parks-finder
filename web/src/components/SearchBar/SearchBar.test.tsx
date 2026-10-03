@@ -2,10 +2,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import type { Park } from '../../../../shared/parks';
+import { track } from '../../analytics';
 import { LiveRegionProvider } from '../../a11y/LiveRegion';
 import { StateProvider } from '../../state/AppState';
 import { ParkList } from '../ParkList';
 import { SearchBar } from './SearchBar';
+
+jest.mock('../../analytics', () => ({ track: jest.fn() }));
 
 const parks: Park[] = [
   {
@@ -337,5 +340,18 @@ describe('SearchBar', () => {
         expect(await axe(container)).toHaveNoViolations();
       },
     );
+  });
+});
+
+describe('SearchBar analytics', () => {
+  it('typing sends filter_applied text/changed and never the typed text', async () => {
+    (track as jest.Mock).mockClear();
+    setup();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search parks' }), 'secret');
+    expect(track).toHaveBeenCalledWith({
+      name: 'filter_applied',
+      props: { filter: 'text', value: 'changed' },
+    });
+    expect(JSON.stringify((track as jest.Mock).mock.calls)).not.toMatch(/secret/);
   });
 });
