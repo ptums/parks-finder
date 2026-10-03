@@ -206,6 +206,22 @@ describe('POST /v1/ask', () => {
     expect(log).not.toContain('Which park has a duck pond?');
   });
 
+  it('logs why a citation failed (problem label only), never the quote itself', async () => {
+    const lines: string[] = [];
+    const hostile = JSON.stringify({
+      answer: 'Oak Park has a duck pond.',
+      citations: [{ chunkId: 'oak-park#overview', quote: 'a secret zoo built in 1901' }],
+    });
+    const server = app({ llm: fakeLlm(hostile).llm, logStream: { write: (l) => lines.push(l) } });
+    await ask(server, { query: 'duck pond' });
+    const entry = lines.map((l) => JSON.parse(l)).find((l) => l.msg === 'ask');
+    expect(entry).toMatchObject({
+      abstainReason: 'citation_failed',
+      citationProblems: ['quote_not_in_chunk'],
+    });
+    expect(lines.join('\n')).not.toContain('secret zoo');
+  });
+
   it('logs only the error class name when the model fails', async () => {
     const lines: string[] = [];
     const { llm } = fakeLlm(() => {

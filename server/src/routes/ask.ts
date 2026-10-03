@@ -79,6 +79,9 @@ export function registerAskRoute(app: FastifyInstance, deps: AskDeps) {
         outputTokens: llmReply?.outputTokens ?? 0,
         citations: verified.citations.length,
         abstainReason: verified.reason,
+        // Problem labels only: quotes and answer words are model text and stay out of logs.
+        citationProblems: verified.rejected?.map((rejected) => rejected.problem),
+        unsupportedCount: verified.unsupported?.length,
       },
       'ask',
     );
