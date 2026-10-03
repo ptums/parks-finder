@@ -51,6 +51,8 @@ module.exports = {
     '!server/src/index.ts',
     // Thin adapter over the ESM-only model library; exercised by build:index and eval:retrieval.
     '!server/src/rag/embedder.ts',
+    // Thin adapter over @anthropic-ai/sdk; tests use a fake LlmClient and never call the API.
+    '!server/src/llm/anthropic.ts',
     '!**/index.ts',
   ],
   coveragePathIgnorePatterns: ['/node_modules/', '/test/'],
