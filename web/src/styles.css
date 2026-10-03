@@ -81,7 +81,7 @@ main {
 /* antd's own focus ring is faint; keep the app's 3px ring on its controls. */
 button.ant-btn:focus-visible {
   outline: 3px solid var(--focus) !important; /* antd sets outline-color with higher priority */
-  outline-offset: 2px;
+  outline-offset: 2px !important; /* antd sets 1px */
 }
 
 /* Native controls styled to match the antd theme: 8px radius, 44px height. The border is

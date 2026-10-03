@@ -21,7 +21,7 @@
 }
 
 /* Selected marker: dashed outline and glow, so it does not rely on color. */
-.park-marker--selected {
+.leaflet-marker-icon.park-marker--selected {
   outline: 3px dashed #1a1a1a;
   outline-offset: 2px;
   filter: hue-rotate(-100deg) brightness(0.65) drop-shadow(0 0 4px #ffffff);

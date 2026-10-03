@@ -184,7 +184,7 @@ Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than t
 
 1. Run the full VoiceOver pass, a real phone pass, 200% zoom and text-spacing checks; test with screen-reader users.
 2. Fix map-marker target size properly (bigger hit areas or clustering) instead of relying on the "Equivalent" exception.
-3. Hosting: monitoring and uptime alerts, a minimum of 1 machine (or accept cold starts), a Content-Security-Policy, and a tested rollback (`fly releases`, then `fly deploy --image <previous>`).
+3. Hosting: monitoring and uptime alerts, a minimum of 1 machine (or accept cold starts), a Content-Security-Policy (Ant Design injects `<style>` tags at runtime, so it needs `style-src 'unsafe-inline'` or a nonce), and a tested rollback (`fly releases`, then `fly deploy --image <previous>`).
 4. If AI search is added: server-side key only, per-IP rate limit, daily cap, grounded answers verified against the data, offline evals.
 5. Replace or self-host the map tiles (OpenStreetMap's public server is not for heavy traffic).
 6. Image hosting and licensing; data freshness and the suspect Cedar Hill coordinate.
