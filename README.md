@@ -64,7 +64,7 @@ Built and checked as described in "How I checked the result":
 
 - **Inside the box I cut** T4 (search), T9 (accessibility audit) and T10 (deploy). All three were built afterwards.
 - Animated transitions beyond the Recenter control; distance labels in the list when sorted by distance.
-- **VoiceOver:** I did a VoiceOver pass as part of my final QA (about 15 minutes, following the script in `docs/VERIFICATION.md`). Not done: a real phone, 200% zoom, text spacing, forced-colors mode.
+- **VoiceOver:** I did a VoiceOver pass as part of my final QA (about 15 minutes, following the 21-step script in `docs/VERIFICATION.md`). No blocking issues found; all scripted steps behaved as expected. Not done: a real phone, 200% zoom, text spacing, forced-colors mode.
 - Streaming answers (deliberate: nothing is read token by token), conversation history, a CSP, monitoring and alerts, a custom domain, image hosting.
 - Partial-word search ("play" no longer matches "playground"), a consequence of whole-word matching.
 
@@ -148,7 +148,7 @@ Built to WCAG 2.2 AA and tested as described. This is not a certification, and a
 
 Tested: jest-axe on component states; whole-page axe (`@axe-core/playwright`, WCAG 2.0 to 2.2 A and AA tags) in several states on desktop and phone; tab-order tests (forward, Shift+Tab, skip links, no trap); aria snapshots and a heading-outline check; Enter, Space and Esc with focus return; 320px reflow; reduced motion; AI states (loading, answer, abstained, error placed under the input with `aria-describedby`); live-region hold. The per-criterion table is in `docs/VERIFICATION.md`.
 
-Known exception: marker target size. VoiceOver: one pass by me during final QA (about 15 minutes). Not done: 200% zoom, text spacing, testing with screen-reader users.
+Known exception: marker target size. VoiceOver: one pass by me during final QA (about 15 minutes); no blocking issues found, all 21 scripted steps behaved as expected. Not done: 200% zoom, text spacing, testing with screen-reader users.
 
 To test with a screen reader: Safari on macOS skips links and buttons on Tab unless "Press Tab to highlight each item" is on; otherwise use Option+Tab. VoiceOver navigation keys work either way. The script, including the AI steps, is in `docs/VERIFICATION.md`.
 
