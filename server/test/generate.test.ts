@@ -28,6 +28,13 @@ describe('prompt construction', () => {
     expect(SYSTEM_PROMPT).toContain('"citations": [{"chunkId"');
   });
 
+  it('system prompt: no "chunk" wording the model could repeat to users (tag and key aside)', () => {
+    const userFacing = SYSTEM_PROMPT.replaceAll('<chunk>', '').replaceAll('"chunkId"', '');
+    expect(userFacing).not.toMatch(/chunk/i);
+    expect(SYSTEM_PROMPT).toMatch(/call the source "the park data"/);
+    expect(SYSTEM_PROMPT).toMatch(/never join text from two elements, never use an ellipsis/);
+  });
+
   it('uses temperature 0, max_tokens 400, no tools, and at most 6 chunks', () => {
     const many = [...testChunks, ...testChunks, ...testChunks];
     const request = buildAskRequest('duck pond', many, 'model-x');

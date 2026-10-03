@@ -16,6 +16,27 @@ import { loadChunks } from '../src/rag/index';
 import { createRetriever } from '../src/rag/retrieve';
 import { verifyAnswer, type VerifiedAnswer } from '../src/rag/verifyCitations';
 
+const PROBLEM_TEXT = {
+  chunk_not_retrieved: 'chunk was not retrieved for this question',
+  quote_too_short: 'quote too short',
+  quote_not_in_chunk: 'quote not in chunk',
+  quote_is_only_park_name: 'quote is only the park name',
+} as const;
+
+/** Why an abstained query abstained, one line per rejected citation (model text only; no secrets). */
+function abstainDetails(result: VerifiedAnswer, modelText: string): string {
+  const lines = (result.rejected ?? []).map(
+    (r) => `  rejected: ${r.chunkId} "${r.quote}" -> ${PROBLEM_TEXT[r.problem]}\n`,
+  );
+  if (result.unsupported?.length) {
+    lines.push(`  unsupported words: ${result.unsupported.join(', ')}\n`);
+  }
+  if (result.reason === 'unparseable' || result.reason === 'no_citations') {
+    lines.push(`  model said: ${modelText.slice(0, 300).replace(/\s+/g, ' ')}\n`);
+  }
+  return lines.join('');
+}
+
 try {
   process.loadEnvFile('.env.local');
 } catch {
@@ -69,12 +90,14 @@ for (const q of queries) {
   const top = retrieval.chunks.slice(0, MAX_CHUNKS);
   let result: VerifiedAnswer = { answer: '', citations: [], abstained: true, reason: 'retrieval' };
   let tokens = '';
+  let modelText = '';
   if (!retrieval.abstained && top.length > 0) {
     try {
       const reply = await llm.create(buildAskRequest(q.query, top, config.anthropicModel), {
         timeoutMs: TIMEOUT_MS,
       });
-      result = verifyAnswer(reply.text, top);
+      modelText = reply.text;
+      result = verifyAnswer(modelText, top);
       tokens = ` tokens ${reply.inputTokens}/${reply.outputTokens}`;
       asked += 1;
     } catch (error) {
@@ -99,7 +122,7 @@ for (const q of queries) {
     `[${q.id}] (${q.type}) expected ${expected}, ${got}${tokens}\n` +
       `  Q: ${q.query}\n` +
       (result.abstained
-        ? ''
+        ? abstainDetails(result, modelText)
         : `  A: ${result.answer}\n  cites: ${result.citations.map((c) => c.quote).join(' | ')}\n`),
   );
 }
