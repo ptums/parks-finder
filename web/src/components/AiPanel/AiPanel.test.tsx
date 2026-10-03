@@ -159,12 +159,13 @@ describe('modes', () => {
 });
 
 describe('asking', () => {
-  it('filters the list, shows matchedText, answer and citation; announces without the answer text', async () => {
+  it('filters the list, keeps matchedText out of it, shows answer and citation; announces without the answer text', async () => {
     await renderWithAi();
     await ask();
     await screen.findByRole('heading', { name: 'AI answer' });
     expect(listNames()).toEqual(['Prospect Park']);
-    expect(screen.getByText('lake and trails')).toBeInTheDocument();
+    expect(screen.queryByText('lake and trails')).not.toBeInTheDocument();
+    expect(document.querySelector('.park-list-item[aria-describedby]')).toBeNull();
     const answer = screen.getByRole('region', { name: 'AI answer' });
     expect(within(answer).getByText('Prospect Park has a lake.')).toBeInTheDocument();
     const status = screen.getByRole('status');
@@ -289,6 +290,16 @@ describe('errors', () => {
     await ask();
     expect(await screen.findByText(unavailable)).toBeInTheDocument();
     expect(listNames()).toHaveLength(12);
+  });
+
+  it('renders the error directly under the input, tied to it with aria-describedby', async () => {
+    await renderWithAi({ ...OK, search: 'network' });
+    await ask();
+    const message = await screen.findByText(unavailable);
+    const input = screen.getByRole('textbox', { name: 'Ask about the parks' });
+    expect(input).toHaveAccessibleDescription(unavailable);
+    expect(input.closest('.search-field')).toContainElement(message);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('429 uses Retry-After', async () => {

@@ -31,3 +31,9 @@
   text-align: left;
   white-space: normal;
 }
+
+.ai-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

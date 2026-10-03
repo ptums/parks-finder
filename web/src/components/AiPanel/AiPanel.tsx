@@ -29,7 +29,6 @@ export function AiPanel({ parks = PARKS }: { parks?: Park[] }) {
           <div aria-busy={state.aiStatus === 'loading'}>
             {state.aiStatus === 'loading' && <p>Searching…</p>}
             {found === 0 && <p>AI found no matching parks.</p>}
-            {state.aiError && <p className="ai-error">{state.aiError}</p>}
             {state.aiAnswer && <AiAnswer answer={state.aiAnswer} parks={parks} />}
           </div>
         </>

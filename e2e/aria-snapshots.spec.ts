@@ -42,29 +42,29 @@ test.describe('aria snapshots', () => {
           - button "Hide park list" [expanded]
           - list:
             - listitem:
-              - button "Cedar Hill Nature Preserve"
+              - button "Cedar Hill Nature Preserve , No rating"
             - listitem:
-              - button "Central Plaza Green"
+              - button "Central Plaza Green , rated 4 out of 5"
             - listitem:
-              - button "East Ridge Trailhead"
+              - button "East Ridge Trailhead , rated 4.9 out of 5"
             - listitem:
-              - button "Highland Dog Park"
+              - button "Highland Dog Park , rated 4.8 out of 5"
             - listitem:
-              - button "Hillcrest Skate Park"
+              - button "Hillcrest Skate Park , rated 3.9 out of 5"
             - listitem:
-              - button "Lakeshore Point"
+              - button "Lakeshore Point , rated 4.3 out of 5"
             - listitem:
-              - button "Old Mill Botanical Garden"
+              - button "Old Mill Botanical Garden , rated 4.6 out of 5"
             - listitem:
-              - button "Prospect Park"
+              - button "Prospect Park , rated 4.7 out of 5"
             - listitem:
-              - button "Riverside Commons"
+              - button "Riverside Commons , rated 4.4 out of 5"
             - listitem:
-              - button "Sunset Playground"
+              - button "Sunset Playground , rated 4.1 out of 5"
             - listitem:
-              - button "Veterans Memorial Field"
+              - button "Veterans Memorial Field , rated 4.2 out of 5"
             - listitem:
-              - button "Willow Creek Wetlands"
+              - button "Willow Creek Wetlands , rated 4.5 out of 5"
       `);
     } else {
       await expect(directory).toMatchAriaSnapshot(`
