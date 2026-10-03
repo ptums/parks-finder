@@ -65,6 +65,7 @@ test.describe('tab order', () => {
       ...markers,
       'Zoom in',
       'Zoom out',
+      'Recenter map',
       'Leaflet',
       'OpenStreetMap',
     ];
