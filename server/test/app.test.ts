@@ -39,6 +39,23 @@ describe('server', () => {
     expect(other.headers['access-control-allow-origin']).not.toBe('http://evil.test');
   });
 
+  it('lets the browser read Retry-After on a cross-origin 429', async () => {
+    const app = buildApp({
+      config: loadConfig({ CORS_ORIGIN: 'http://web.test', RATE_LIMIT_PER_MINUTE: '1' }),
+    });
+    const request = () =>
+      app.inject({
+        method: 'POST',
+        url: '/v1/search',
+        headers: { origin: 'http://web.test' },
+        payload: { query: 'lake' },
+      });
+    await request();
+    const limited = await request();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.headers['access-control-expose-headers']).toMatch(/Retry-After/i);
+  });
+
   it('never rate-limits health and capabilities checks', async () => {
     const app = buildApp({ config: loadConfig({ RATE_LIMIT_PER_MINUTE: '1' }) });
     for (let i = 0; i < 3; i++) {
@@ -47,7 +64,7 @@ describe('server', () => {
     }
   });
 
-  it('/v1/ask is a 503 stub until T6', async () => {
+  it('/v1/ask answers 503 ai_unavailable when no model client is configured', async () => {
     const app = buildApp({ config: loadConfig({ ANTHROPIC_API_KEY: 'k' }) });
     const res = await app.inject({ method: 'POST', url: '/v1/ask', payload: { query: 'hi' } });
     expect(res.statusCode).toBe(503);

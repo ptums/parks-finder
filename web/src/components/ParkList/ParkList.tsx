@@ -1,11 +1,15 @@
 import type { Park } from '../../../../shared/parks';
 import { track } from '../../analytics';
 import { PARKS } from '../../data/parks';
+import { matchFor } from '../../search/aiResults';
+import { effectiveMode } from '../../state/selectors';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
 import './ParkList.css';
 
 export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
-  const { directoryOpen } = useAppState();
+  const state = useAppState();
+  const { directoryOpen } = state;
+  const aiResults = effectiveMode(state) === 'filters' ? null : state.aiResults;
   const dispatch = useDispatch();
   const visible = useVisibleParks(parks);
 
@@ -33,6 +37,7 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               type="button"
               id={`park-list-item-${park.id}`}
               className="park-list-item"
+              aria-describedby={aiResults ? `park-match-${park.id}` : undefined}
               onClick={() => {
                 track({ name: 'park_selected', props: { park_id: park.id, source: 'list' } });
                 dispatch({
@@ -44,8 +49,14 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               }}
             >
               <span className="park-list-name">{park.name}</span>
+
               {!park.coords && <span className="park-list-note">Not shown on map</span>}
             </button>
+            {aiResults && (
+              <span id={`park-match-${park.id}`} className="park-list-note">
+                {matchFor(aiResults, park.id)?.matchedText}
+              </span>
+            )}
           </li>
         ))}
       </ul>

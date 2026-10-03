@@ -10,7 +10,23 @@ export function initialState(directoryOpen = true): AppState {
     sort: 'name',
     origin: null,
     directoryOpen,
+    aiAvailable: false,
+    mode: 'both',
+    aiQuery: '',
+    aiStatus: 'idle',
+    aiResults: null,
+    aiAnswer: null,
+    aiError: null,
   };
+}
+
+function fallbackSort(state: AppState): AppState['sort'] {
+  return state.sort === 'relevance' ? 'name' : state.sort;
+}
+
+function clearedAi(state: AppState): AppState {
+  const { aiQuery, aiStatus, aiResults, aiAnswer, aiError } = initialState();
+  return { ...state, aiQuery, aiStatus, aiResults, aiAnswer, aiError };
 }
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -44,8 +60,36 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case 'setDirectoryOpen':
       return { ...state, directoryOpen: action.open };
+    case 'aiAvailable':
+      return { ...state, aiAvailable: true };
+    case 'setMode':
+      // "Best match" only makes sense with AI results, so Filters mode drops it.
+      return {
+        ...state,
+        mode: action.mode,
+        sort: action.mode === 'filters' && state.sort === 'relevance' ? 'name' : state.sort,
+      };
+    case 'setAiQuery':
+      return { ...state, aiQuery: action.query };
+    case 'aiSearchStarted':
+      return { ...state, aiStatus: 'loading', aiError: null, aiAnswer: null };
+    case 'aiSearchFinished':
+      return {
+        ...state,
+        aiStatus: action.error ? 'error' : 'done',
+        aiResults: action.results,
+        aiAnswer: action.answer,
+        aiError: action.error,
+        sort: action.results ? 'relevance' : fallbackSort(state),
+      };
+    case 'aiCleared':
+      return { ...clearedAi(state), sort: fallbackSort(state) };
     case 'reset':
-      // Keeps directoryOpen: that is a layout choice, not a search setting.
-      return { ...initialState(state.directoryOpen) };
+      // Keeps directoryOpen (layout) and the AI mode choice: those are not search settings.
+      return {
+        ...initialState(state.directoryOpen),
+        aiAvailable: state.aiAvailable,
+        mode: state.mode,
+      };
   }
 }

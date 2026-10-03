@@ -2,6 +2,7 @@ import { ANALYTICS_DISCLOSURE } from './analytics';
 import { env } from './env';
 import { LiveRegionProvider } from './a11y/LiveRegion';
 import { SkipLink } from './a11y/SkipLink';
+import { AiPanel } from './components/AiPanel';
 import { ParkDetails } from './components/ParkDetails';
 import { ParkList } from './components/ParkList';
 import { ParkMap } from './components/ParkMap';
@@ -16,6 +17,7 @@ export function App() {
         <header>
           <h1>Find a Park</h1>
           <p>NYC-area parks</p>
+          <AiPanel />
           <SearchBar />
         </header>
         <main>

@@ -1,0 +1,36 @@
+.ai-spacer {
+  min-height: 8rem;
+}
+
+.ai-modes {
+  margin: 0 0 0.5rem;
+}
+
+.ai-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin-right: 1rem;
+}
+
+.ai-error {
+  font-weight: 600;
+}
+
+.ai-citations {
+  padding-left: 0;
+  list-style: none;
+}
+
+.ai-citations button {
+  min-height: 44px;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+}
