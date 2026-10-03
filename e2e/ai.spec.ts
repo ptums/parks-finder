@@ -112,3 +112,21 @@ test('slow capabilities: AI appears later and focus stays where it was', async (
   await expect(page.getByRole('search', { name: 'AI search' })).toBeVisible({ timeout: 5000 });
   await expect(search).toBeFocused();
 });
+
+test('a slow capabilities reply does not overwrite the location message', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 40.66, longitude: -73.97 });
+  await fakeService(page, { ai: true }, 1000);
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: 'Show park list' });
+  if (await toggle.isVisible()) await toggle.click();
+  await page.getByRole('button', { name: 'Use my location' }).click();
+
+  const status = page.getByRole('status');
+  // Neither message is lost: each is shown at some point, in this order.
+  await expect(status).toHaveText('Sorted by distance from your location.');
+  await expect(status).toHaveText('AI search is available.', { timeout: 10000 });
+});
