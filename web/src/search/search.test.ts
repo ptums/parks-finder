@@ -1,4 +1,6 @@
 import type { Park } from '../../../shared/parks';
+import { AMENITY_LABELS, amenityLabel } from '../../../shared/amenities';
+import { PARKS } from '../data/parks';
 import { initialState } from '../state/reducer';
 import type { AppState } from '../state/types';
 import { filterParks } from './filterParks';
@@ -57,6 +59,70 @@ describe('filterParks', () => {
 
   it('combines text and amenities', () => {
     expect(filterParks(parks, withState({ query: 'beta', amenities: ['restrooms'] }))).toEqual([]);
+  });
+});
+
+describe('whole-word text search', () => {
+  const keywords = [
+    'Waterfront',
+    'Fishing',
+    'Kayak launch',
+    'Picnic areas',
+    'Parking',
+    'Event lawn',
+    'Wi-Fi',
+    'Restrooms',
+    'Food vendors',
+    'Accessible paths',
+    'Playground',
+    'Dog run',
+    'Trails',
+    'Bike path',
+    'Lake',
+    'Skate park',
+    'Lighting',
+    'Water fountain',
+    'Wildlife viewing',
+  ];
+  const slugFor = (keyword: string) =>
+    Object.keys(AMENITY_LABELS).find((slug) => amenityLabel(slug) === keyword) as string;
+
+  it.each(keywords)('"%s" returns exactly the parks that list that amenity', (keyword) => {
+    const expected = PARKS.filter((p) => p.amenities.includes(slugFor(keyword))).map((p) => p.id);
+    expect(expected.length).toBeGreaterThan(0);
+    expect(ids(filterParks(PARKS, withState({ query: keyword })))).toEqual(expected);
+  });
+
+  it('"Lake" excludes Lakeshore Point', () => {
+    const names = filterParks(PARKS, withState({ query: 'Lake' })).map((p) => p.name);
+    expect(names).not.toContain('Lakeshore Point');
+  });
+
+  it('tolerates a plural: "trail" matches "Trails"', () => {
+    expect(filterParks(PARKS, withState({ query: 'trail' }))).toEqual(
+      filterParks(PARKS, withState({ query: 'Trails' })),
+    );
+    expect(filterParks(PARKS, withState({ query: 'trail' })).length).toBeGreaterThan(0);
+  });
+
+  it('treats "WiFi" and "wifi" like "Wi-Fi"', () => {
+    const wifi = filterParks(PARKS, withState({ query: 'Wi-Fi' }));
+    expect(wifi.length).toBeGreaterThan(0);
+    expect(filterParks(PARKS, withState({ query: 'WiFi' }))).toEqual(wifi);
+    expect(filterParks(PARKS, withState({ query: 'wifi' }))).toEqual(wifi);
+  });
+
+  it('no longer matches partial words', () => {
+    expect(filterParks(parks, withState({ query: 'rest' }))).toEqual([]);
+  });
+
+  it('needs every word of a multi-word query', () => {
+    expect(ids(filterParks(parks, withState({ query: 'quiet restrooms' })))).toEqual(['a']);
+    expect(filterParks(parks, withState({ query: 'quiet wifi' }))).toEqual([]);
+  });
+
+  it('returns everything for an empty query', () => {
+    expect(filterParks(PARKS, withState({ query: '' }))).toBe(PARKS);
   });
 });
 
