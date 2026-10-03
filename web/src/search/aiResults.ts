@@ -12,8 +12,3 @@ export function aiRank(parks: Park[], results: SearchResult[]): Park[] {
   const rank = (park: Park) => results.findIndex((result) => result.parkId === park.id);
   return [...parks].sort((a, b) => rank(a) - rank(b));
 }
-
-/** The best (first) result for a park, used to show why it matched. */
-export function matchFor(results: SearchResult[], parkId: string): SearchResult | undefined {
-  return results.find((result) => result.parkId === parkId);
-}
