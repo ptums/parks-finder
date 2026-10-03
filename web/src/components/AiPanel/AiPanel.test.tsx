@@ -151,10 +151,10 @@ describe('modes', () => {
     expect(screen.getByRole('radio', { name: 'Filters' })).toBeChecked();
     expect(screen.getByRole('search', { name: 'Search and filter parks' })).toBeInTheDocument();
     expect(screen.queryByRole('search', { name: 'AI search' })).toBeNull();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 100));
+    // "AI search is available." is held first, so wait for the later message.
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Filters only'), {
+      timeout: 4000,
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Filters only');
   });
 });
 
@@ -167,11 +167,10 @@ describe('asking', () => {
     expect(screen.getByText('lake and trails')).toBeInTheDocument();
     const answer = screen.getByRole('region', { name: 'AI answer' });
     expect(within(answer).getByText('Prospect Park has a lake.')).toBeInTheDocument();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 100));
-    });
     const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('AI found 1 park. Answer ready.');
+    await waitFor(() => expect(status).toHaveTextContent('AI found 1 park. Answer ready.'), {
+      timeout: 4000,
+    });
     expect(status).not.toHaveTextContent('has a lake');
     expect(screen.getByRole('option', { name: 'Best match' })).toBeInTheDocument();
   });
@@ -238,7 +237,10 @@ describe('announcements and focus', () => {
     await screen.findByRole('heading', { name: 'AI answer' });
     await userEvent.click(screen.getByRole('radio', { name: 'Filters' }));
     await settle(700);
-    expect(screen.getByRole('status')).toHaveTextContent('Filters only');
+    // "AI search is available." is held first, so wait for the later message.
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Filters only'), {
+      timeout: 4000,
+    });
   });
 
   it('Clear AI search moves focus to the query input', async () => {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import type { Park } from '../../../../shared/parks';
 import { track } from '../../analytics';
-import { LiveRegionProvider } from '../../a11y/LiveRegion';
+import { LiveRegionProvider, MIN_HOLD_MS } from '../../a11y/LiveRegion';
 import { StateProvider } from '../../state/AppState';
 import { ParkList } from '../ParkList';
 import { SearchBar } from './SearchBar';
@@ -213,7 +213,7 @@ describe('SearchBar', () => {
       settle(); // let the count announcement for the sort change pass
       await user.click(await screen.findByRole('button', { name: 'Stop using my location' }));
       expect(screen.getByLabelText('Sort by')).toHaveValue('rating');
-      settle();
+      settle(MIN_HOLD_MS + 100); // earlier messages are held first
       expect(screen.getByRole('status')).toHaveTextContent('Parks are listed by rating.');
     });
 
@@ -260,7 +260,7 @@ describe('SearchBar', () => {
       expect(screen.getByLabelText('Sort by')).toHaveValue('name');
       expect(screen.queryByRole('option', { name: 'Distance' })).toBeNull();
       expect(visibleNames()).toEqual(['Alpha Park', 'Beta Green', 'Gamma Field']);
-      settle();
+      settle(MIN_HOLD_MS + 100); // the "Sorted by distance" message is held first
       expect(screen.getByRole('status')).toHaveTextContent('Stopped using your location');
       expect(screen.getByRole('button', { name: 'Use my location' })).toBeInTheDocument();
     });
