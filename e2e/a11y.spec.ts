@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, failPhotos, test } from './fixtures';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
@@ -51,6 +51,7 @@ test.describe('whole-page axe scans (WCAG 2.0/2.1/2.2 A and AA tags)', () => {
   test('details open for a full park (image fails to load, so the placeholder shows)', async ({
     page,
   }) => {
+    await failPhotos(page);
     await page.goto('/');
     await openDetails(page, 'highland-dog-park');
     await expect(page.getByText('Image unavailable')).toBeVisible();

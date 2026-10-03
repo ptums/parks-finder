@@ -96,7 +96,7 @@ Built and checked as described in "How I checked the result":
 
 ## Dataset changes
 
-None. `db/parks.sample.json` is used verbatim and read directly (no copy, no derived file). It is normalized in memory at load (null or empty becomes "missing"). The AI index is built from the same file at build time and is a build artifact, not a data change.
+One derived file, `db/park-images.json`. `db/parks.sample.json` is untouched and still read verbatim; it is normalized in memory at load (null or empty becomes "missing"). The record's 12 image URLs are all on `images.example.com` and can never load, so the derived file maps 10 park ids to local photos in `images/` (file name plus a short alt text written from looking at each photo). The loader overlays it on those parks' images; a park not in the map keeps its record's images, which fail and show the placeholder. `cedar-hill-nature-preserve` and `east-ridge-trailhead` have no photo and show "Photos not listed". `npm run validate:data` checks that every file exists in `images/`, every id is a real park, and no file is listed twice. The AI index is built from the same file at build time and is a build artifact, not a data change.
 
 ## Known issues
 
@@ -111,6 +111,9 @@ None. `db/parks.sample.json` is used verbatim and read directly (no copy, no der
 - OpenStreetMap tile usage policy applies.
 - `matchFor` is a now-dead helper that should be cleaned up after PR #38. Chromium reads the list name as "Prospect Park , rated…" (extra space), a nit.
 - Parallel e2e runs on fixed ports can test another worktree's build (REVIEW_LOG #68); mitigated with isolated `CI=1` re-runs, not yet fixed with per-worktree ports.
+- **Photo source and licence are unverified.** The photos in `images/` were added for demo purposes. Clear or replace them before public use. Some are illustrations or renderings, and `oldmill-2.jpg` carries a photographer credit in the picture.
+- `images/riverside-commons-1.jpg` is 1.1 MB (about 10-50x the others, which are 22-92 kB). Resize it before public use; I did not touch the human's files.
+- `images/memorial.jpg` is unused on purpose: it shows a real stadium in La Crosse, WI, with sponsor logos, which would mislead for Veterans Memorial Field (that park uses `memorial-park.jpg`).
 - The image alt "Photo N of M: name" is verbose to some screen readers. Kept deliberately.
 
 ## How I checked the result

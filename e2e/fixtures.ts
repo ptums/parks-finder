@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
 // Tiny transparent PNG so map tiles never hit the real OpenStreetMap server.
 const PIXEL = Buffer.from(
@@ -14,5 +14,10 @@ export const test = base.extend({
     await use(page);
   },
 });
+
+/** Makes every park photo fail to load, so tests can check the placeholder path. */
+export async function failPhotos(page: Page) {
+  await page.route('**/*.{jpg,webp}', (route) => route.abort());
+}
 
 export { expect };

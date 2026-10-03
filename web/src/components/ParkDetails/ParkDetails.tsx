@@ -90,9 +90,14 @@ function ParkDialog({ park }: { park: Park }) {
         </div>
         {park.images.length > 0 ? (
           <ul className="park-gallery" aria-label="Photos">
-            {park.images.map((src, index) => (
+            {park.images.map((photo, index) => (
               <li key={`${park.id}-${index}`}>
-                <ParkImage src={src} name={park.name} index={index} total={park.images.length} />
+                <ParkImage
+                  photo={photo}
+                  name={park.name}
+                  index={index}
+                  total={park.images.length}
+                />
               </li>
             ))}
           </ul>

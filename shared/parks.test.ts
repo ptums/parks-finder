@@ -23,7 +23,7 @@ describe('normalizePark', () => {
       coords: { lat: 40.1, lng: -73.9 },
       amenities: ['trails', 'lake'],
       hours: '6 AM - 1 AM',
-      images: ['a.jpg'],
+      images: [{ src: 'a.jpg' }],
       acreage: 10,
       rating: 4.5,
     });

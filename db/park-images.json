@@ -1,0 +1,70 @@
+{
+  "prospect-park": [
+    {
+      "file": "prospect-park-1.jpg",
+      "alt": "Prospect Park: illustration of people on a covered wooden walkway overlooking a meadow of flowers"
+    },
+    {
+      "file": "prospect-park-2.jpg",
+      "alt": "Prospect Park: illustration of a pond with rocks and lily pads, a paved path and green trees"
+    }
+  ],
+  "riverside-commons": [
+    {
+      "file": "riverside-commons-1.jpg",
+      "alt": "Riverside Commons: aerial view of green trees beside a wide river, with tall brick apartment buildings and a street"
+    }
+  ],
+  "sunset-playground": [
+    {
+      "file": "sunset-playground.jpg",
+      "alt": "Sunset Playground: wooden play structure with a red roof and metal slides, with trees behind"
+    }
+  ],
+  "highland-dog-park": [
+    {
+      "file": "highland-dog-park.webp",
+      "alt": "Highland Dog Park: two dogs playing with a toy on a grass field beside a fence and bench"
+    }
+  ],
+  "veterans-memorial-field": [
+    {
+      "file": "memorial-park.jpg",
+      "alt": "Veterans Memorial Field: aerial view of a baseball infield, grass fields, a parking lot and woods"
+    }
+  ],
+  "old-mill-botanical-garden": [
+    {
+      "file": "oldmill-1.jpg",
+      "alt": "Old Mill Botanical Garden: stone mill building beside a pond, with flowering shrubs and a duck"
+    },
+    {
+      "file": "oldmill-2.jpg",
+      "alt": "Old Mill Botanical Garden: pond and stone path among autumn-coloured trees, with the mill in the distance"
+    }
+  ],
+  "lakeshore-point": [
+    {
+      "file": "lakeshore-1.jpg",
+      "alt": "Lakeshore Point: sandy beach with a playground and swings beside a lake, with a paved path in front"
+    }
+  ],
+  "central-plaza-green": [
+    {
+      "file": "plaza-1.jpg",
+      "alt": "Central Plaza Green: illustration of a paved plaza with benches, planters and a glass office building"
+    }
+  ],
+  "willow-creek-wetlands": [
+    {
+      "file": "willow-1.jpg",
+      "alt": "Willow Creek Wetlands: shallow water with a pile of sticks, grassy hillside and trees behind"
+    }
+  ],
+  "hillcrest-skate-park": [
+    {
+      "file": "hillcrest-1.jpg",
+      "alt": "Hillcrest Skate Park: view over a large green field with trees and a wooden stairway in the foreground"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, failPhotos, test } from './fixtures';
 
 // The directory starts collapsed on phones, so open it when needed.
 async function openDirectory(page: Page) {
@@ -29,9 +29,9 @@ test.describe('list and details', () => {
   });
 
   test('Space opens details and the image placeholder shows', async ({ page }) => {
+    await failPhotos(page);
     await page.goto('/');
     await openDirectory(page);
-    // Highland Dog Park has an image URL (which fails in the sample data).
     await page.locator('#park-list-item-highland-dog-park').focus();
     await page.keyboard.press('Space');
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -42,6 +42,7 @@ test.describe('list and details', () => {
   });
 
   test('every photo of a park gets its own placeholder', async ({ page }) => {
+    await failPhotos(page);
     await page.goto('/');
     await openDirectory(page);
     await page.locator('#park-list-item-prospect-park').click();
@@ -51,6 +52,20 @@ test.describe('list and details', () => {
     await expect(
       page.getByRole('img', { name: 'Photo 2 of 2 of Prospect Park unavailable' }),
     ).toBeVisible();
+  });
+
+  test('Prospect Park photos load, with the alt text from the image map', async ({ page }) => {
+    await page.goto('/');
+    await openDirectory(page);
+    await page.locator('#park-list-item-prospect-park').click();
+    const photos = page.getByRole('list', { name: 'Photos' }).getByRole('img');
+    await expect(photos).toHaveCount(2);
+    await expect(photos.first()).toHaveAttribute('alt', /^Prospect Park: /);
+    for (const photo of await photos.all()) {
+      await expect
+        .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+        .toBeGreaterThan(0);
+    }
   });
 
   test('there is no keyboard trap inside details', async ({ page }) => {

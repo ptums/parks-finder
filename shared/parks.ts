@@ -21,6 +21,12 @@ export const RawParkSchema = z
 
 export type RawPark = z.infer<typeof RawParkSchema>;
 
+/** One photo. `alt` comes from db/park-images.json; records have none. */
+export interface ParkPhoto {
+  src: string;
+  alt?: string;
+}
+
 export interface Park {
   id: string;
   name: string;
@@ -29,7 +35,7 @@ export interface Park {
   coords?: { lat: number; lng: number };
   amenities: string[];
   hours?: string;
-  images: string[];
+  images: ParkPhoto[];
   acreage?: number;
   rating?: number;
 }
@@ -76,7 +82,7 @@ export function normalizePark(input: unknown): Park | null {
     coords: cleanCoords(raw.location?.lat, raw.location?.lng),
     amenities: cleanStrings(raw.amenities),
     hours: cleanString(raw.hours),
-    images: cleanStrings(raw.images),
+    images: cleanStrings(raw.images).map((src) => ({ src })),
     acreage: acreage !== undefined && acreage > 0 ? acreage : undefined,
     rating: rating !== undefined && rating >= 0 && rating <= 5 ? rating : undefined,
   };
