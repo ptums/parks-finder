@@ -5,12 +5,39 @@
   margin-bottom: 0.5rem;
 }
 
-.search-field input,
-.search-field select {
-  min-height: 44px;
-  box-sizing: border-box;
-  padding: 0.5rem 0.75rem;
-  font: inherit;
+/* Phone: stacked. Wide screens: one wrapping row; DOM order is the visual order. */
+.search-form {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .search-form {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem 1rem;
+    max-width: 64rem;
+  }
+
+  .search-form .search-field {
+    flex: 1 1 14rem;
+    margin-bottom: 0;
+  }
+
+  .search-form .search-amenities {
+    flex: 0 1 16rem;
+  }
+
+  .search-form .search-amenities[open],
+  .search-form > p {
+    flex-basis: 100%;
+  }
+
+  .search-form .search-button,
+  .search-form .search-reset {
+    margin: 0;
+  }
 }
 
 .search-button,
@@ -19,10 +46,47 @@
 }
 
 .search-amenities summary {
+  box-sizing: border-box;
   min-height: 44px;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
   cursor: pointer;
+}
+
+.search-amenities summary::-webkit-details-marker {
+  display: none;
+}
+
+.search-amenities summary:hover {
+  border-color: var(--accent);
+  background: var(--green-light);
+}
+
+/* Chevron drawn with borders; it points down when closed and up when open. */
+.search-amenities summary::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.search-amenities[open] summary::after {
+  transform: rotate(225deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .search-amenities summary::after {
+    transition: transform 0.15s;
+  }
 }
 
 .search-amenities fieldset {

@@ -9,7 +9,7 @@ test.describe('aria snapshots', () => {
     await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
       - banner:
         - heading "Find a Park" [level=1]
-        - paragraph: NYC-area parks
+        - paragraph: 'NYC-area parks: browse the map or the list, then open one for details.'
         - search "Search and filter parks"
     `);
   });

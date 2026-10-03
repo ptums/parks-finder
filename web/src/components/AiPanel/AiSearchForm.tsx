@@ -64,7 +64,7 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
   }
 
   return (
-    <form role="search" aria-label="AI search" onSubmit={submit}>
+    <form role="search" className="search-form" aria-label="AI search" onSubmit={submit}>
       <label htmlFor="ai-query" className="search-field">
         Ask about the parks
         <input

@@ -36,7 +36,7 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
             <Button
               block
               id={`park-list-item-${park.id}`}
-              className="park-list-item"
+              className={`park-list-item${state.selectedParkId === park.id ? ' park-list-item--selected' : ''}`}
               aria-describedby={aiResults ? `park-match-${park.id}` : undefined}
               onClick={() => {
                 track({ name: 'park_selected', props: { park_id: park.id, source: 'list' } });

@@ -129,7 +129,12 @@ function StandardSearch({ parks }: { parks: Park[] }) {
   }
 
   return (
-    <form role="search" aria-label="Search and filter parks" onSubmit={(e) => e.preventDefault()}>
+    <form
+      role="search"
+      className="search-form"
+      aria-label="Search and filter parks"
+      onSubmit={(e) => e.preventDefault()}
+    >
       <label htmlFor="park-search" className="search-field">
         Search parks
         <input

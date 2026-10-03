@@ -17,7 +17,9 @@ export function App() {
         <SkipLink href="#directory-heading">Skip to results</SkipLink>
         <header>
           <Typography.Title level={1}>Find a Park</Typography.Title>
-          <p>NYC-area parks</p>
+          <p className="tagline">
+            NYC-area parks: browse the map or the list, then open one for details.
+          </p>
           <AiPanel />
           <SearchBar />
         </header>

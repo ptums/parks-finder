@@ -27,3 +27,15 @@
 .park-list-note {
   font-size: 0.875rem;
 }
+
+.park-list-item.ant-btn:hover {
+  background: var(--green-light);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.park-list-item--selected.ant-btn {
+  background: var(--green-mid);
+  border-color: var(--accent);
+  border-width: 2px;
+}

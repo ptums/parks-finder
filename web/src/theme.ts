@@ -2,8 +2,8 @@ import type { ThemeConfig } from 'antd';
 
 /**
  * Park green. Contrast against white (computed with the WCAG formula):
- * normal 6.29:1, hover 4.92:1, pressed 8.7:1. All at least 4.5:1 in both directions
- * (green text on white, white text on green). antd's default blue is 3.49:1 and fails AA.
+ * normal 8.08:1, hover 6.21:1, pressed 10.48:1. All at least 4.5:1 in both directions
+ * (green text on white, white text on green). antd's default blue is 4.10:1 and fails AA.
  */
 export const PRIMARY = '#0b5d1e';
 const PRIMARY_HOVER = '#14702a';

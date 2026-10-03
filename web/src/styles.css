@@ -3,6 +3,9 @@
   --bg: #ffffff;
   --accent: #0b5d1e;
   --focus: #0033cc;
+  --control-border: #767676;
+  --green-light: #e6f4e8;
+  --green-mid: #d3ecd7;
   font-family: system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -81,9 +84,35 @@ button.ant-btn:focus-visible {
   outline-offset: 2px;
 }
 
-/* Page look: a green band for the title, and a card feel for the search panel. */
+/* Native controls styled to match the antd theme: 8px radius, 44px height. The border is
+   #767676 (4.5:1 on white) so the control edge passes the 3:1 non-text contrast rule. */
+input[type='search'],
+input[type='text'],
+select {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}
+
+input[type='search']:hover,
+input[type='text']:hover,
+select:hover {
+  border-color: var(--accent);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
+}
+
+/* Header: a soft green band with a darker rule. */
 header {
-  background: #eef6ef;
+  background: linear-gradient(135deg, #dff0e2, #f4faf5);
   border-bottom: 4px solid var(--accent);
 }
 
@@ -92,9 +121,9 @@ header .ant-typography {
   margin: 0.25rem 0;
 }
 
-form[aria-label$='search' i],
-form[aria-label='Search and filter parks'] {
-  padding-bottom: 0.25rem;
+.tagline {
+  margin: 0 0 0.75rem;
+  color: #333;
 }
 
 footer {
