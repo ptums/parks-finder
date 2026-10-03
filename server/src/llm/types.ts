@@ -28,3 +28,40 @@ export class LlmTimeoutError extends Error {
     this.name = 'LlmTimeoutError';
   }
 }
+
+/**
+ * A provider failure reduced to safe fields. Deliberately no message: upstream messages
+ * can echo request details. status is the HTTP status; providerType is e.g.
+ * "invalid_request_error", "authentication_error", "rate_limit_error", "overloaded_error".
+ */
+export class LlmError extends Error {
+  readonly status?: number;
+  readonly providerType?: string;
+  readonly requestId?: string;
+
+  constructor(details: { status?: number; providerType?: string; requestId?: string } = {}) {
+    super('LLM request failed');
+    this.name = 'LlmError';
+    this.status = details.status;
+    this.providerType = details.providerType;
+    this.requestId = details.requestId;
+  }
+}
+
+/** Safe, loggable fields for any error thrown by an LlmClient. */
+export function llmErrorFields(error: unknown): {
+  errorName: string;
+  status?: number;
+  providerType?: string;
+  requestId?: string;
+} {
+  if (error instanceof LlmError) {
+    return {
+      errorName: error.name,
+      status: error.status,
+      providerType: error.providerType,
+      requestId: error.requestId,
+    };
+  }
+  return { errorName: error instanceof Error ? error.name : 'unknown' };
+}

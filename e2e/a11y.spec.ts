@@ -99,7 +99,8 @@ test.describe('capability gating (no AI UI exists)', () => {
     await expectNoAiControls(page);
   });
 
-  test('service says ai:true: still no AI controls (the web app has no AI UI)', async ({
+  // Builds WITH VITE_RAG_URL (AI UI present) are covered by e2e/ai.spec.ts.
+  test('without VITE_RAG_URL, even ai:true from a service shows no AI controls', async ({
     page,
   }) => {
     await page.route('**/v1/capabilities', (route) =>
