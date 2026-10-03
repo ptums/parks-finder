@@ -74,3 +74,30 @@ main {
     transition: top 0.1s;
   }
 }
+
+/* antd's own focus ring is faint; keep the app's 3px ring on its controls. */
+button.ant-btn:focus-visible {
+  outline: 3px solid var(--focus) !important; /* antd sets outline-color with higher priority */
+  outline-offset: 2px;
+}
+
+/* Page look: a green band for the title, and a card feel for the search panel. */
+header {
+  background: #eef6ef;
+  border-bottom: 4px solid var(--accent);
+}
+
+header .ant-typography {
+  color: var(--accent);
+  margin: 0.25rem 0;
+}
+
+form[aria-label$='search' i],
+form[aria-label='Search and filter parks'] {
+  padding-bottom: 0.25rem;
+}
+
+footer {
+  margin-top: 1rem;
+  border-top: 1px solid #d9d9d9;
+}

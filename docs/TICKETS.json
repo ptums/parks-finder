@@ -301,5 +301,37 @@
       ".github/workflows/deploy-rag.yml"
     ],
     "issue": 10
+  },
+  {
+    "id": "T12",
+    "title": "Integrate Ant Design for styling (accessibility-preserving)",
+    "body": "Human-requested styling pass with Ant Design (antd@^6.6.5). Park-green ConfigProvider theme with at least 4.5:1 contrast, motion off under reduced motion, only native-semantic antd components (Button, Tag, Typography); keep the dialog, native select, map, skip links and live region.",
+    "acceptance": [
+      "npm run check passes and coverage thresholds hold.",
+      "npm run e2e passes in full with 0 failed; changed aria snapshots are listed.",
+      "Primary colour contrast ratios are reported and are at least 4.5:1.",
+      "With reduced motion there are no antd transitions or animations.",
+      "Focus outline is at least 2px on antd controls; targets stay at least 44px.",
+      "Web bundle size before and after is reported.",
+      "REQUIREMENTS.md section 0 has the dated amendment; README decisions and known issues updated."
+    ],
+    "requirements": ["NFR-1"],
+    "depends_on": [],
+    "size": "M",
+    "labels": ["core", "size:M"],
+    "files_touched": [
+      "package.json",
+      "package-lock.json",
+      "web/src/main.tsx",
+      "web/src/App.tsx",
+      "web/src/styles.css",
+      "web/src/theme.ts",
+      "web/src/components/**",
+      "e2e/**",
+      "REQUIREMENTS.md",
+      "README.md",
+      "docs/TICKETS.json"
+    ],
+    "issue": 28
   }
 ]

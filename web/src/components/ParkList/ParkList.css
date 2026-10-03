@@ -8,27 +8,18 @@
   display: none;
 }
 
-.directory-toggle,
-.park-list-item {
-  min-height: 44px;
-  box-sizing: border-box;
-  padding: 0.5rem 0.75rem;
-  font: inherit;
-  color: inherit;
-  background: #fff;
-  border: 1px solid #1a1a1a;
-  cursor: pointer;
-}
-
 .directory-toggle {
   margin-bottom: 0.5rem;
 }
 
-.park-list-item {
+.park-list-item.ant-btn {
   display: flex;
+  height: auto;
+  min-height: 44px;
   flex-direction: column;
   align-items: flex-start;
-  width: 100%;
+  padding: 0.5rem 0.75rem;
+  white-space: normal;
   margin-bottom: 0.25rem;
   text-align: left;
 }

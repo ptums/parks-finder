@@ -41,13 +41,15 @@
 .park-details-close {
   min-height: 44px;
   min-width: 44px;
-  box-sizing: border-box;
-  padding: 0.5rem 1rem;
-  font: inherit;
-  color: inherit;
-  background: #fff;
-  border: 2px solid #1a1a1a;
-  cursor: pointer;
+}
+
+.park-details ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .park-image-box {
