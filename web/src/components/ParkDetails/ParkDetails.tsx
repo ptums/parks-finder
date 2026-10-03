@@ -1,3 +1,4 @@
+import { Button, Tag } from 'antd';
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Park } from '../../../../shared/parks';
 import { amenityLabel } from '../../../../shared/amenities';
@@ -84,9 +85,9 @@ function ParkDialog({ park }: { park: Park }) {
           <h2 id="park-details-heading" ref={headingRef} tabIndex={-1}>
             {park.name}
           </h2>
-          <button type="button" className="park-details-close" onClick={() => close('button')}>
+          <Button className="park-details-close" onClick={() => close('button')}>
             Close
-          </button>
+          </Button>
         </div>
         {firstImage ? (
           <ParkImage key={park.id} src={firstImage} name={park.name} />
@@ -98,7 +99,9 @@ function ParkDialog({ park }: { park: Park }) {
           {park.amenities.length > 0 ? (
             <ul>
               {park.amenities.map((slug) => (
-                <li key={slug}>{amenityLabel(slug)}</li>
+                <li key={slug}>
+                  <Tag>{amenityLabel(slug)}</Tag>
+                </li>
               ))}
             </ul>
           ) : (

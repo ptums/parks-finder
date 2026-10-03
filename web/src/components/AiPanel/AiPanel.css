@@ -23,14 +23,11 @@
   list-style: none;
 }
 
-.ai-citations button {
+.ai-citations .ant-btn {
+  height: auto;
   min-height: 44px;
   margin-bottom: 0.5rem;
   padding: 0.5rem 0.75rem;
-  font: inherit;
   text-align: left;
-  color: inherit;
-  background: #fff;
-  border: 1px solid #1a1a1a;
-  cursor: pointer;
+  white-space: normal;
 }

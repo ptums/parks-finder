@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import type { Park } from '../../../../shared/parks';
 import { track } from '../../analytics';
 import { PARKS } from '../../data/parks';
@@ -18,8 +19,7 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
       <h2 id="directory-heading" tabIndex={-1}>
         Park directory
       </h2>
-      <button
-        type="button"
+      <Button
         className="directory-toggle"
         aria-expanded={directoryOpen}
         aria-controls="park-list"
@@ -29,14 +29,14 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
         }}
       >
         {directoryOpen ? 'Hide park list' : 'Show park list'}
-      </button>
+      </Button>
       <ul id="park-list" className="park-list" hidden={!directoryOpen}>
         {visible.map((park) => (
           <li key={park.id}>
-            <button
-              type="button"
+            <Button
+              block
               id={`park-list-item-${park.id}`}
-              className="park-list-item"
+              className={`park-list-item${state.selectedParkId === park.id ? ' park-list-item--selected' : ''}`}
               aria-describedby={aiResults ? `park-match-${park.id}` : undefined}
               onClick={() => {
                 track({ name: 'park_selected', props: { park_id: park.id, source: 'list' } });
@@ -51,7 +51,7 @@ export function ParkList({ parks = PARKS }: { parks?: Park[] }) {
               <span className="park-list-name">{park.name}</span>
 
               {!park.coords && <span className="park-list-note">Not shown on map</span>}
-            </button>
+            </Button>
             {aiResults && (
               <span id={`park-match-${park.id}`} className="park-list-note">
                 {matchFor(aiResults, park.id)?.matchedText}

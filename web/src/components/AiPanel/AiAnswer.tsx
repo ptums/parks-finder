@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import type { Park } from '../../../../shared/parks';
 import type { AskResponse as Answer } from '../../../../shared/api';
 import { track } from '../../analytics';
@@ -29,8 +30,7 @@ export function AiAnswer({ answer, parks }: { answer: Answer; parks: Park[] }) {
               const id = `ai-citation-${index}`;
               return (
                 <li key={`${citation.chunkId}-${index}`}>
-                  <button
-                    type="button"
+                  <Button
                     id={id}
                     onClick={() => {
                       track({
@@ -46,7 +46,7 @@ export function AiAnswer({ answer, parks }: { answer: Answer; parks: Park[] }) {
                     }}
                   >
                     {park.name}: “{citation.quote}”
-                  </button>
+                  </Button>
                 </li>
               );
             })}

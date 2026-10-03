@@ -68,6 +68,7 @@ Why: roughly half the 2-hour box was spent waiting at the first human review gat
 - **Missing data is normalized at load**: null and empty strings become "missing", and the UI never invents a value.
 - **Env access in one module** (`web/src/env.ts`), stubbed in Jest because Jest cannot run `import.meta`.
 - **Hooks and CI as gates**: Husky pre-commit (lint-staged then typecheck) and pre-push (Jest); CI mirrors them.
+- **Ant Design for styling only (added at the human's request, T12).** One `ConfigProvider` theme (`web/src/theme.ts`): park green `#0b5d1e` (8.08:1 on white, and white on it the same; hover 6.21:1, pressed 10.48:1), 8px radius, 16px base font, 44px control height, and `motion: false` plus no click ripple under `prefers-reduced-motion`. Only `Button`, `Tag` and `Typography.Title` are used, because they render native `<button>`, `<span>` and `<h1>`. Kept native: the details `<dialog>`, the `<select>`, checkboxes and radios, the map, skip links and the live region. antd `Alert` is not used because it adds `role="alert"`, a second announcer. Trade-off: the web JS grew from 493.86 kB (153.33 kB gzip) to 767.31 kB (245.72 kB gzip).
 - Full list and trade-offs: `docs/ARCHITECTURE.md`.
 
 ## Assumptions
@@ -107,6 +108,7 @@ None. `db/parks.sample.json` is used verbatim and read directly (no copy, no der
 - The live site auto-stops when idle; the first request after a pause is slower (cold start).
 - `npm run dev` runs the web app only.
 - OpenStreetMap tile usage policy applies.
+- Ant Design adds about 273 kB raw (92 kB gzip) to the main bundle. antd's own focus ring is faint, so `web/src/styles.css` overrides it with the app's 3px ring (needs `!important`, because antd sets the outline colour with higher priority). Its CSS-in-JS injects style tags at run time. antd was checked only with jest-axe, Playwright axe and the keyboard specs, not with a screen reader.
 
 ## How I checked the result
 
@@ -182,7 +184,7 @@ Timeline is in `docs/TIMEBOX.md`. Because of the long gate wait, far less than t
 
 1. Run the full VoiceOver pass, a real phone pass, 200% zoom and text-spacing checks; test with screen-reader users.
 2. Fix map-marker target size properly (bigger hit areas or clustering) instead of relying on the "Equivalent" exception.
-3. Hosting: monitoring and uptime alerts, a minimum of 1 machine (or accept cold starts), a Content-Security-Policy, and a tested rollback (`fly releases`, then `fly deploy --image <previous>`).
+3. Hosting: monitoring and uptime alerts, a minimum of 1 machine (or accept cold starts), a Content-Security-Policy (Ant Design injects `<style>` tags at runtime, so it needs `style-src 'unsafe-inline'` or a nonce), and a tested rollback (`fly releases`, then `fly deploy --image <previous>`).
 4. If AI search is added: server-side key only, per-IP rate limit, daily cap, grounded answers verified against the data, offline evals.
 5. Replace or self-host the map tiles (OpenStreetMap's public server is not for heavy traffic).
 6. Image hosting and licensing; data freshness and the suspect Cedar Hill coordinate.

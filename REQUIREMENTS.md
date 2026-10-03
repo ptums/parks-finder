@@ -20,6 +20,7 @@ Proposed by the pm and architect (`docs/PRD.md`, `docs/ARCHITECTURE.md` section 
 10. **New dev dependency `concurrently`** so `npm run dev` runs web and server together.
 11. The brief file is `PARKS_PROJECT.md`. PROCESS.md section 0 config values are read as bare names: owner `ptums`, repo `parks-finder`, Fly apps `peter-parks-web` and `peter-parks-rag`.
 12. The transcripts folder is `transcripts/` (renamed by the human at G0).
+13. **2026-10-02: Ant Design added at the human's request (styling only).** `antd@^6` joins the fixed stack (T12, issue #28). It may only be used through components that render native semantic elements (Button, Tag, Typography, layout helpers). The details `<dialog>`, native `<select>`, Leaflet map, skip links and the single live region stay as they were. Primary colour must be at least 4.5:1 both ways; `motion` is off under reduced motion. No behaviour changes. This is the approved exception to "feature tickets do not edit `package.json`".
 
 ## 1. Goal
 

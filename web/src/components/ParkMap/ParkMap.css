@@ -14,10 +14,16 @@
   box-shadow: 0 0 0 5px #ffffff;
 }
 
+/* Park-green markers: the default blue PNG is hue-shifted, then darkened to about #1c5f12,
+   which is at least 4.8:1 against the OSM tile background, parks and water colours. */
+.leaflet-marker-icon.leaflet-interactive {
+  filter: hue-rotate(-100deg) brightness(0.65);
+}
+
 /* Selected marker: dashed outline and glow, so it does not rely on color. */
-.park-marker--selected {
+.leaflet-marker-icon.park-marker--selected {
   outline: 3px dashed #1a1a1a;
   outline-offset: 2px;
-  filter: drop-shadow(0 0 4px #ffffff);
+  filter: hue-rotate(-100deg) brightness(0.65) drop-shadow(0 0 4px #ffffff);
   transform-origin: bottom center;
 }

@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { amenityLabel } from '../../../../shared/amenities';
 import type { Park } from '../../../../shared/parks';
@@ -128,7 +129,12 @@ function StandardSearch({ parks }: { parks: Park[] }) {
   }
 
   return (
-    <form role="search" aria-label="Search and filter parks" onSubmit={(e) => e.preventDefault()}>
+    <form
+      role="search"
+      className="search-form"
+      aria-label="Search and filter parks"
+      onSubmit={(e) => e.preventDefault()}
+    >
       <label htmlFor="park-search" className="search-field">
         Search parks
         <input
@@ -189,20 +195,20 @@ function StandardSearch({ parks }: { parks: Park[] }) {
       </label>
 
       {origin ? (
-        <button type="button" className="search-button" onClick={stopUsingLocation}>
+        <Button className="search-button" onClick={stopUsingLocation}>
           Stop using my location
-        </button>
+        </Button>
       ) : (
-        <button type="button" className="search-button" aria-busy={pending} onClick={useMyLocation}>
+        <Button className="search-button" aria-busy={pending} onClick={useMyLocation}>
           Use my location
-        </button>
+        </Button>
       )}
       {pending && <p>Finding your location…</p>}
       {locationError && !origin && <p className="search-location-error">{unavailableText(sort)}</p>}
 
-      <button type="button" className="search-reset" onClick={reset}>
+      <Button className="search-reset" onClick={reset}>
         Reset
-      </button>
+      </Button>
 
       {count === 0 && <p className="search-empty">{NO_MATCH}</p>}
     </form>

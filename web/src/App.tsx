@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { ANALYTICS_DISCLOSURE } from './analytics';
 import { env } from './env';
 import { LiveRegionProvider } from './a11y/LiveRegion';
@@ -15,8 +16,10 @@ export function App() {
       <LiveRegionProvider>
         <SkipLink href="#directory-heading">Skip to results</SkipLink>
         <header>
-          <h1>Find a Park</h1>
-          <p>NYC-area parks</p>
+          <Typography.Title level={1}>Find a Park</Typography.Title>
+          <p className="tagline">
+            NYC-area parks: browse the map or the list, then open one for details.
+          </p>
           <AiPanel />
           <SearchBar />
         </header>

@@ -3,6 +3,9 @@
   --bg: #ffffff;
   --accent: #0b5d1e;
   --focus: #0033cc;
+  --control-border: #767676;
+  --green-light: #e6f4e8;
+  --green-mid: #d3ecd7;
   font-family: system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -73,4 +76,57 @@ main {
   .skip-link {
     transition: top 0.1s;
   }
+}
+
+/* antd's own focus ring is faint; keep the app's 3px ring on its controls. */
+button.ant-btn:focus-visible {
+  outline: 3px solid var(--focus) !important; /* antd sets outline-color with higher priority */
+  outline-offset: 2px !important; /* antd sets 1px */
+}
+
+/* Native controls styled to match the antd theme: 8px radius, 44px height. The border is
+   #767676 (4.5:1 on white) so the control edge passes the 3:1 non-text contrast rule. */
+input[type='search'],
+input[type='text'],
+select {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}
+
+input[type='search']:hover,
+input[type='text']:hover,
+select:hover {
+  border-color: var(--accent);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
+}
+
+/* Header: a soft green band with a darker rule. */
+header {
+  background: linear-gradient(135deg, #dff0e2, #f4faf5);
+  border-bottom: 4px solid var(--accent);
+}
+
+header .ant-typography {
+  color: var(--accent);
+  margin: 0.25rem 0;
+}
+
+.tagline {
+  margin: 0 0 0.75rem;
+  color: #333;
+}
+
+footer {
+  margin-top: 1rem;
+  border-top: 1px solid #d9d9d9;
 }

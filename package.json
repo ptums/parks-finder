@@ -32,6 +32,7 @@
     "@fastify/cors": "^11.3.0",
     "@fastify/rate-limit": "^11.2.0",
     "@huggingface/transformers": "^4.3.0",
+    "antd": "^6.6.5",
     "fastify": "^5.12.5",
     "leaflet": "^1.9.4",
     "posthog-js": "^1.435.8",

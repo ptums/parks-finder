@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import { useEffect, useRef } from 'react';
 import type { Park } from '../../../../shared/parks';
 import { AiError, askParks, failureMessage, searchParks } from '../../ai/client';
@@ -63,7 +64,7 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
   }
 
   return (
-    <form role="search" aria-label="AI search" onSubmit={submit}>
+    <form role="search" className="search-form" aria-label="AI search" onSubmit={submit}>
       <label htmlFor="ai-query" className="search-field">
         Ask about the parks
         <input
@@ -77,12 +78,11 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
           onChange={(e) => dispatch({ type: 'setAiQuery', query: e.target.value })}
         />
       </label>
-      <button type="submit" className="search-button" aria-disabled={loading}>
+      <Button type="primary" htmlType="submit" className="search-button" aria-disabled={loading}>
         Ask
-      </button>
+      </Button>
       {(aiQuery || aiResults) && (
-        <button
-          type="button"
+        <Button
           className="search-reset"
           onClick={() => {
             dispatch({ type: 'aiCleared' });
@@ -90,7 +90,7 @@ export function AiSearchForm({ parks }: { parks: Park[] }) {
           }}
         >
           Clear AI search
-        </button>
+        </Button>
       )}
     </form>
   );
