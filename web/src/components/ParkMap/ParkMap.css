@@ -27,3 +27,24 @@
   filter: hue-rotate(-100deg) brightness(0.65) drop-shadow(0 0 4px #ffffff);
   transform-origin: bottom center;
 }
+
+/* Recenter button: a real button, at least 44px tall, with the same visible focus ring. */
+.recenter-button {
+  background: #ffffff;
+  border: 0;
+  color: #1a1a1a;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+}
+.recenter-button:hover {
+  background: #f0f0f0;
+}
+.recenter-button:focus-visible {
+  outline: 3px solid #1a1a1a;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #ffffff;
+}

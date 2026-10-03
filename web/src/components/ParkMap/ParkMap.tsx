@@ -5,7 +5,8 @@ import type { Park } from '../../../../shared/parks';
 import { track } from '../../analytics';
 import { PARKS } from '../../data/parks';
 import { useAppState, useDispatch, useVisibleParks } from '../../state/AppState';
-import './icons';
+import { parkIcon } from './icons';
+import { RecenterControl } from './RecenterControl';
 import {
   MAP_LABEL,
   MARKER_SELECTED_CLASS,
@@ -70,6 +71,7 @@ function ParkMarker({ park, selected }: { park: ParkWithCoords; selected: boolea
     <Marker
       ref={markerRef}
       position={[park.coords.lat, park.coords.lng]}
+      icon={parkIcon}
       keyboard
       zIndexOffset={selected ? 1000 : 0}
       eventHandlers={{
@@ -107,6 +109,7 @@ export function ParkMap({ parks = PARKS, mapRef }: { parks?: Park[]; mapRef?: Re
         {...motionOptions(reduced)}
       >
         <MapSetup selected={selected} reduced={reduced} />
+        <RecenterControl bounds={bounds} reduced={reduced} />
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

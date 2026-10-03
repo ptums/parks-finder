@@ -74,4 +74,48 @@ test.describe('map markers', () => {
     await page.keyboard.press('Enter');
     await expect(marker(page)).toHaveClass(/park-marker--selected/);
   });
+
+  test('marker images load, with no doubled path', async ({ page }) => {
+    await page.goto('/');
+    await expect(marker(page)).toBeVisible();
+    const images = await page
+      .locator('img.leaflet-marker-icon, img.leaflet-marker-shadow')
+      .evaluateAll((els) =>
+        els.map((el) => ({
+          src: (el as HTMLImageElement).src,
+          width: (el as HTMLImageElement).naturalWidth,
+        })),
+      );
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) {
+      expect(image.width).toBeGreaterThan(0);
+      expect(image.src).not.toMatch(/images\/+.*@fs/);
+    }
+  });
+
+  test('Recenter map restores the initial zoom and does not move focus', async ({ page }) => {
+    await page.goto('/');
+    await expect(marker(page)).toBeVisible();
+    // Marker spread on screen is proportional to the zoom scale: use it as a zoom measure.
+    const spread = () =>
+      page.evaluate(() => {
+        const xs = [...document.querySelectorAll('.leaflet-marker-icon')].map(
+          (el) => el.getBoundingClientRect().left,
+        );
+        return Math.max(...xs) - Math.min(...xs);
+      });
+    const initial = await spread();
+
+    const recenter = page.getByRole('button', { name: /recenter/i });
+    const box = await recenter.boundingBox();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+
+    await page.getByRole('button', { name: 'Zoom out' }).click();
+    await expect.poll(spread).toBeCloseTo(initial / 2, -1); // one zoom level out, animation finished
+    await recenter.focus();
+    await recenter.click();
+    await expect.poll(spread).toBeCloseTo(initial, -1);
+    await expect(recenter).toBeFocused();
+  });
 });

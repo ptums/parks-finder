@@ -6,6 +6,8 @@ import type { Park } from '../../../../shared/parks';
 import { StateProvider, useAppState, useDispatch } from '../../state/AppState';
 import { MAP_LABEL, MARKER_SELECTED_CLASS, motionOptions, parksWithCoords } from './mapHelpers';
 import { ParkMap } from './ParkMap';
+import { parkIcon } from './icons';
+import { recenter } from './RecenterControl';
 
 const park = (id: string, name: string, coords?: Park['coords']): Park => ({
   id,
@@ -131,6 +133,54 @@ describe('ParkMap', () => {
     } finally {
       window.matchMedia = original;
     }
+  });
+
+  it('uses explicit icon URLs without a doubled path', () => {
+    const { iconUrl, shadowUrl } = parkIcon.options;
+    expect(iconUrl).toBeTruthy();
+    expect(`${iconUrl}${shadowUrl}`).not.toMatch(/images\/+.*(@fs|http|\/\/)/);
+    renderMap();
+    const src = document.querySelector('img.leaflet-marker-icon')?.getAttribute('src');
+    expect(src).toBe(iconUrl);
+  });
+
+  describe('Recenter control', () => {
+    const renderWithMap = () => {
+      const mapRef = createRef<L.Map>();
+      render(
+        <StateProvider>
+          <ParkMap parks={parks} mapRef={mapRef} />
+        </StateProvider>,
+      );
+      return mapRef;
+    };
+
+    it('is a labelled button that fits the initial bounds with animation', () => {
+      const mapRef = renderWithMap();
+      const fit = jest.spyOn(mapRef.current!, 'fitBounds');
+      const button = screen.getByRole('button', { name: /recenter/i });
+      expect(button.tagName).toBe('BUTTON');
+      fireEvent.click(button);
+      expect(fit).toHaveBeenCalledTimes(1);
+      const [bounds, options] = fit.mock.calls[0]!;
+      expect((bounds as L.LatLngBounds).contains([40.7, -74])).toBe(true);
+      expect((bounds as L.LatLngBounds).contains([40.8, -73.9])).toBe(true);
+      expect(options).toMatchObject({ animate: true });
+    });
+
+    it('does not animate under reduced motion', () => {
+      const fit = jest.fn();
+      recenter({ fitBounds: fit } as unknown as L.Map, {} as L.LatLngBounds, true);
+      expect(fit).toHaveBeenCalledWith({}, { animate: false });
+    });
+
+    it('does not move focus', () => {
+      renderWithMap();
+      const button = screen.getByRole('button', { name: /recenter/i });
+      button.focus();
+      fireEvent.click(button);
+      expect(button).toHaveFocus();
+    });
   });
 
   describe('accessibility', () => {
