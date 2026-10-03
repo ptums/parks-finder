@@ -37,3 +37,8 @@
   flex-direction: column;
   gap: 0.25rem;
 }
+
+/* Separate the AI search from the standard search below it. */
+.ai-panel {
+  margin-bottom: 1.5rem;
+}
