@@ -10,8 +10,8 @@ Closes #
 ## Checks
 
 - [ ] `npm run check` passes (paste the last lines below)
-- [ ] Tests added; no `.only`/`.skip`/`.todo`
-- [ ] UI: keyboard, labels, focus and announcements covered; jest-axe clean
+- [ ] Tests added. No `.only`, `.skip` or `.todo`.
+- [ ] UI: keyboard, labels, focus and announcements are covered. jest-axe is clean.
 - [ ] Missing data handled
 - [ ] Docs updated
 
